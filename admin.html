@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Service Kamera Bogor - Web Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* ANIMASI BREATHING (PENDAR BERNAPAS HALUS) */
+    @keyframes breathing {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6);
+      }
+      50% {
+        transform: scale(1.03);
+        box-shadow: 0 0 12px 3px rgba(245, 158, 11, 0.45);
+      }
+    }
+    .animate-breathing {
+      animation: breathing 2.2s ease-in-out infinite;
+    }
+
+    #printableArea { display: none; }
+    @media print {
+      @page { margin: 1cm; size: auto; }
+      body { background: #fff !important; color: #000 !important; }
+      body * { visibility: hidden !important; }
+      #printableArea, #printableArea * { visibility: visible !important; }
+      #printableArea {
+        display: block !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        font-size: 10pt;
+        color: #000 !important;
+        background: #fff !important;
+      }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col items-center p-4">
+
+  <!-- SIDEBAR NAVIGATION DRAWER (GARIS 3) -->
+  <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/50 z-40 hidden transition-opacity"></div>
+  <div id="sidebarMenu" class="fixed top-0 left-0 bottom-0 w-72 bg-white z-50 shadow-2xl p-5 transform -translate-x-full transition-transform duration-300 flex flex-col justify-between">
+    <div class="space-y-6">
+      <div class="flex justify-between items-center border-b border-slate-200 pb-4">
+        <h2 class="font-black text-sm text-slate-900 tracking-tight">MENU NAVIGASI</h2>
+        <button onclick="toggleSidebar()" class="text-slate-400 hover:text-slate-700 font-bold text-lg p-1">✕</button>
+      </div>
+
+      <div class="space-y-2 text-xs font-bold">
+        <button onclick="switchView('dashboard'); toggleSidebar();" id="navDashboard" class="w-full text-left px-3.5 py-2.5 rounded-xl bg-amber-400 text-slate-950 flex items-center gap-2.5 shadow-sm transition">
+          <span>📋</span> Dashboard & SPK Service
+        </button>
+        <button onclick="switchView('finance'); toggleSidebar();" id="navFinance" class="w-full text-left px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center gap-2.5 transition">
+          <span>💰</span> Laporan Keuangan
+        </button>
+      </div>
+    </div>
+    
+    <div class="border-t border-slate-200 pt-4 text-[10px] text-slate-400 text-center font-medium leading-relaxed">
+      Copyright Kevin Eleazar Chandra©<br>Beta Test Ver V1.0
+    </div>
+  </div>
+
+  <div class="w-full max-w-3xl bg-white rounded-2xl shadow-lg p-6 my-4 border border-slate-200 no-print space-y-6">
+    
+    <!-- Header Admin -->
+    <div class="text-center border-b border-slate-200 pb-4 relative">
+      <!-- Tombol Garis 3 (Hamburger Menu) di Kiri Atas -->
+      <button onclick="toggleSidebar()" class="absolute left-0 top-0 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 p-2 rounded-xl transition flex items-center gap-1.5 shadow-sm active:scale-95" title="Buka Menu Navigasi">
+        <span class="text-sm font-black">☰</span>
+        <span class="text-[10px] font-bold hidden sm:inline">Menu</span>
+      </button>
+
+      <div class="absolute right-0 top-0 flex items-center gap-1.5 bg-emerald-50 border border-emerald-300 px-2.5 py-1 rounded-full text-[10px] text-emerald-800 font-bold">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+        <span>🟢 Live Real-Time</span>
+      </div>
+
+      <h1 class="text-2xl font-black text-slate-900 tracking-tight">SERVICE KAMERA BOGOR</h1>
+      <p class="text-xs text-slate-500 font-bold tracking-wider mt-0.5">WEB ADMIN PORTAL</p>
+    </div>
+
+    <!-- VIEW 1: DASHBOARD & SPK SERVICE (KONTEN UTAMA) -->
+    <div id="viewDashboard" class="space-y-6">
+      <!-- PANTAU BEBAN KERJA & ANTRIAN AKTIF TEKNISI -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <!-- Card Adib -->
+        <button onclick="setFilter('adib')" id="filterAdib" class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 hover:border-amber-400 text-left transition flex justify-between items-center group active:scale-95 shadow-sm">
+          <div>
+            <span class="text-[10px] text-slate-500 font-semibold block">Antrian Aktif</span>
+            <h4 class="text-xs font-extrabold text-slate-900 flex items-center gap-1">👨‍🔧 Teknisi Adib</h4>
+            <p class="text-[9px] text-slate-400 mt-0.5">Belum Selesai</p>
+          </div>
+          <div class="bg-amber-100 border border-amber-300 px-3 py-1.5 rounded-lg text-center">
+            <span id="countAdibActive" class="text-base font-black text-amber-900">0</span>
+            <span class="text-[9px] text-amber-800 block font-bold">Unit</span>
+          </div>
+        </button>
+
+        <!-- Card Oky -->
+        <button onclick="setFilter('oky')" id="filterOky" class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 hover:border-blue-400 text-left transition flex justify-between items-center group active:scale-95 shadow-sm">
+          <div>
+            <span class="text-[10px] text-slate-500 font-semibold block">Antrian Aktif</span>
+            <h4 class="text-xs font-extrabold text-slate-900 flex items-center gap-1">👨‍🔧 Teknisi Oky</h4>
+            <p class="text-[9px] text-slate-400 mt-0.5">Belum Selesai</p>
+          </div>
+          <div class="bg-blue-100 border border-blue-300 px-3 py-1.5 rounded-lg text-center">
+            <span id="countOkyActive" class="text-base font-black text-blue-900">0</span>
+            <span class="text-[9px] text-blue-800 block font-bold">Unit</span>
+          </div>
+        </button>
+
+        <!-- Card Total SPK -->
+        <button onclick="setFilter('all')" id="filterAllSummary" class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 hover:border-slate-400 text-left transition flex justify-between items-center group active:scale-95 shadow-sm">
+          <div>
+            <span class="text-[10px] text-slate-500 font-semibold block">Total Seluruh</span>
+            <h4 class="text-xs font-extrabold text-slate-900">📦 Semua Unit</h4>
+            <p class="text-[9px] text-slate-400 mt-0.5">Semua Status</p>
+          </div>
+          <div class="bg-slate-200 border border-slate-300 px-3 py-1.5 rounded-lg text-center">
+            <span id="countTotalSummary" class="text-base font-black text-slate-900">0</span>
+            <span class="text-[9px] text-slate-600 block font-bold">Unit</span>
+          </div>
+        </button>
+      </div>
+
+      <!-- Banner Notifikasi Real-Time Teknisi (Animasi Breathing) -->
+      <div id="globalNotifBanner" class="hidden animate-breathing bg-amber-50 border border-amber-300 p-3 rounded-xl flex justify-between items-center text-xs text-amber-950 shadow-sm">
+        <span class="font-bold flex items-center gap-1.5" id="globalNotifText">🔔 Ada update progress terbaru dari teknisi!</span>
+        <div class="flex gap-2">
+          <button onclick="setFilter('update')" class="bg-amber-400 hover:bg-amber-500 text-slate-950 font-extrabold px-2.5 py-1 rounded-lg transition shadow-sm">
+            Filter Update
+          </button>
+          <button onclick="clearAllNotifications()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold px-2.5 py-1 rounded-lg transition">
+            Tandai Dibaca
+          </button>
+        </div>
+      </div>
+
+      <!-- Webhook Integration & Reset Button -->
+      <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2 shadow-sm">
+        <div class="flex justify-between items-center">
+          <label class="block text-xs font-bold text-slate-800">📊 Webhook Google Sheets (Tersambung Otomatis):</label>
+          <button onclick="resetCorruptedCache()" class="text-[10px] bg-rose-100 hover:bg-rose-200 text-rose-800 border border-rose-300 px-2.5 py-1 rounded-lg font-bold transition">
+            🧹 Bersihkan Cache Data Error
+          </button>
+        </div>
+        <div class="flex gap-2">
+          <input type="text" id="sheetUrlInput" readonly class="flex-1 p-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-600 outline-none">
+        </div>
+      </div>
+
+      <!-- Upload Logo Toko -->
+      <div class="flex items-center gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200 shadow-sm">
+        <img id="logoPreview" class="h-12 w-auto object-contain hidden bg-white p-1 rounded border border-slate-200" alt="Logo Perusahaan">
+        <div class="flex-1">
+          <label class="block text-xs font-bold text-slate-800 mb-1">Logo Toko / Perusahaan (Untuk Nota/SPK):</label>
+          <input type="file" id="inputLogo" accept="image/*" onchange="uploadLogo(event)" class="text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-amber-400 file:text-slate-950 hover:file:bg-amber-500 cursor-pointer">
+        </div>
+        <button onclick="removeLogo()" id="btnRemoveLogo" class="text-xs bg-rose-100 hover:bg-rose-200 text-rose-800 border border-rose-300 px-3 py-1.5 rounded-lg hidden transition font-bold">Hapus Logo</button>
+      </div>
+
+      <!-- Form Buat SPK Baru -->
+      <form onsubmit="createSPK(event); return false;" class="border border-slate-200 rounded-2xl p-4 bg-slate-50 space-y-3 shadow-sm">
+        <h3 class="font-black text-sm text-slate-900 border-b border-slate-200 pb-2 flex items-center gap-1.5">
+          <span>➕ Buat SPK Baru</span>
+        </h3>
+        
+        <!-- FITUR PENUNJUKAN TEKNISI -->
+        <div class="bg-white p-2.5 rounded-xl border border-amber-300 shadow-sm">
+          <label class="block text-xs font-bold text-slate-800 mb-1">👨‍🔧 Serahkan Pekerjaan Kepada Teknisi:</label>
+          <select id="inputTeknisi" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-900 font-bold outline-none focus:border-amber-400">
+            <option value="Adib">👨‍🔧 Teknisi Adib</option>
+            <option value="Oky">👨‍🔧 Teknisi Oky</option>
+          </select>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <input type="text" id="inputName" required placeholder="Nama Pelanggan" class="p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-900 outline-none focus:border-amber-400">
+          <input type="tel" id="inputPhone" required placeholder="No. WhatsApp (contoh: 08123456789)" class="p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-900 outline-none focus:border-amber-400">
+          
+          <select id="inputType" class="p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-amber-400">
+            <option value="Kamera">Kamera</option>
+            <option value="Lensa">Lensa</option>
+          </select>
+
+          <select id="inputDeliveryType" class="p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-amber-400">
+            <option value="Store">🏪 Datang Langsung ke Store</option>
+            <option value="Ekspedisi">📦 Kiriman Ekspedisi / Kurir</option>
+            <option value="Pedagang_Store">🤝 Pedagang (Datang ke Store)</option>
+            <option value="Pedagang_Ekspedisi">🤝 Pedagang (Kiriman Ekspedisi)</option>
+          </select>
+
+          <input type="text" id="inputModel" required placeholder="Merk & Tipe (misal: Sony A7 III)" class="p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-900 outline-none focus:border-amber-400">
+          <input type="text" id="inputSN" placeholder="Serial Number (S/N) Body/Lensa" class="p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-900 outline-none focus:border-amber-400">
+
+          <!-- Input Range Estimasi Biaya -->
+          <div class="md:col-span-2 grid grid-cols-2 gap-2 bg-white p-2.5 rounded-xl border border-slate-200">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-700 mb-1">Estimasi Min (Rp):</label>
+              <input type="number" id="inputEstMin" placeholder="contoh: 300000" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none text-slate-900 focus:border-amber-400">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-700 mb-1">Estimasi Max (Rp):</label>
+              <input type="number" id="inputEstMax" placeholder="contoh: 500000" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none text-slate-900 focus:border-amber-400">
+            </div>
+          </div>
+          
+          <input type="text" id="inputKondisi" required placeholder="Kondisi Fisik Diterima (misal: Mulus, Baret halus)" class="p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-900 outline-none focus:border-amber-400 md:col-span-2">
+          <input type="text" id="inputKelengkapan" required placeholder="Kelengkapan Unit (misal: Baterai 1x, Strap, Charger, Cap)" class="p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-900 outline-none focus:border-amber-400 md:col-span-2">
+
+          <div class="md:col-span-2">
+            <label class="block text-xs font-bold text-slate-700 mb-1">Target Estimasi Selesai:</label>
+            <input type="datetime-local" id="inputTarget" required class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-900 outline-none focus:border-amber-400">
+          </div>
+        </div>
+
+        <textarea id="inputIssue" required placeholder="Deskripsi Keluhan / Kerusakan Unit" rows="2" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-900 outline-none focus:border-amber-400"></textarea>
+        
+        <button type="submit" class="w-full bg-amber-400 hover:bg-amber-500 text-slate-950 font-extrabold py-3 rounded-xl text-xs transition shadow-sm">
+          Terbitkan SPK & Send WA Serah Terima
+        </button>
+      </form>
+
+      <!-- Filter & Daftar SPK -->
+      <div class="space-y-3">
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-slate-200 pb-2">
+          <h3 class="font-extrabold text-sm text-slate-900">📋 Daftar SPK Service</h3>
+          
+          <div class="flex flex-wrap gap-1 text-xs items-center">
+            <button onclick="setFilter('all')" id="filterAll" class="px-2 py-1 rounded-lg bg-amber-400 text-slate-950 font-extrabold">Semua</button>
+            <button onclick="setFilter('adib')" id="filterBtnAdib" class="px-2 py-1 rounded-lg bg-slate-200 text-slate-700 font-bold">👨‍🔧 Adib</button>
+            <button onclick="setFilter('oky')" id="filterBtnOky" class="px-2 py-1 rounded-lg bg-slate-200 text-slate-700 font-bold">👨‍🔧 Oky</button>
+            <button onclick="setFilter('update')" id="filterUpdate" class="px-2 py-1 rounded-lg bg-slate-200 text-slate-700 font-bold">🔔 Update Baru</button>
+            <button onclick="setFilter('active')" id="filterActive" class="px-2 py-1 rounded-lg bg-slate-200 text-slate-700 font-bold">Aktif</button>
+            <button onclick="setFilter('unpaid')" id="filterUnpaid" class="px-2 py-1 rounded-lg bg-slate-200 text-slate-700 font-bold">💳 Belum Lunas</button>
+            <button onclick="tagihSemuaWA()" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-amber-400 font-extrabold transition flex items-center gap-1 shadow-sm">💬 Tagih Semua (WA)</button>
+            <button onclick="setFilter('warning')" id="filterWarning" class="px-2 py-1 rounded-lg bg-slate-200 text-slate-700 font-bold">⚠️ Warning</button>
+            <button onclick="setFilter('completed')" id="filterCompleted" class="px-2 py-1 rounded-lg bg-slate-200 text-slate-700 font-bold">Selesai</button>
+            <button onclick="setFilter('ekspedisi')" id="filterEkspedisi" class="px-2 py-1 rounded-lg bg-slate-200 text-slate-700 font-bold">📦 Ekspedisi</button>
+            <button onclick="setFilter('pedagang')" id="filterPedagang" class="px-2 py-1 rounded-lg bg-slate-200 text-slate-700 font-bold">🤝 Pedagang</button>
+          </div>
+        </div>
+
+        <!-- Search Box -->
+        <div>
+          <input type="text" id="adminSearchInput" oninput="renderAdminList()" placeholder="🔍 Cari berdasarkan No. SPK, Nama, S/N, atau No. HP..." class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 outline-none focus:border-amber-400 transition font-medium">
+        </div>
+
+        <div id="adminSpkList" class="space-y-3"></div>
+      </div>
+    </div>
+
+    <!-- VIEW 2: LAPORAN KEUANGAN (TANPA EMOJI) -->
+    <div id="viewFinance" class="hidden space-y-6">
+      <div class="border-b border-slate-200 pb-3 flex justify-between items-center">
+        <div>
+          <h2 class="font-black text-base text-slate-900">Laporan & Riwayat Keuangan</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Pencatatan otomatis dari setiap unit kamera/lensa yang sudah lunas.</p>
+        </div>
+        <button onclick="switchView('dashboard')" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold px-3 py-1.5 rounded-lg transition">
+          Kembali ke SPK
+        </button>
+      </div>
+
+      <!-- Ringkasan Total Pendapatan -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-emerald-50 border border-emerald-300 p-4 rounded-2xl shadow-sm">
+          <span class="text-xs text-emerald-800 font-bold block mb-1">Total Pemasukan Lunas</span>
+          <h3 id="totalRevenueAmount" class="text-2xl font-black text-emerald-950">Rp 0</h3>
+          <p class="text-[10px] text-emerald-700 mt-1">Akumulasi seluruh pembayaran service masuk.</p>
+        </div>
+        <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl shadow-sm">
+          <span class="text-xs text-slate-500 font-bold block mb-1">Jumlah Unit Lunas</span>
+          <h3 id="totalPaidUnitsCount" class="text-2xl font-black text-slate-900">0 Unit</h3>
+          <p class="text-[10px] text-slate-400 mt-1">Total kamera/lensa yang telah melunasi tagihan.</p>
+        </div>
+      </div>
+
+      <!-- Tabel Riwayat Pemasukan -->
+      <div class="space-y-3">
+        <h4 class="font-extrabold text-xs text-slate-900 uppercase tracking-wide">Daftar Transaksi Masuk (Lunas):</h4>
+        <div class="border border-slate-200 rounded-2xl overflow-hidden bg-slate-50">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-200/70 text-slate-700 border-b border-slate-200 font-bold">
+                  <th class="p-3">No. SPK</th>
+                  <th class="p-3">Pelanggan</th>
+                  <th class="p-3">Unit / Kamera</th>
+                  <th class="p-3">Rincian Pekerjaan</th>
+                  <th class="p-3 text-right">Nominal</th>
+                </tr>
+              </thead>
+              <tbody id="financeTableBody" class="divide-y divide-slate-200 bg-white">
+                <tr>
+                  <td colspan="5" class="p-4 text-center text-slate-400 font-medium">Belum ada data transaksi keuangan yang lunas.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="printableArea"></div>
+
+  <script>
+    const STATUS_STAGES = ["Diterima", "Diagnosa", "Pengerjaan", "Selesai"];
+    const DEFAULT_SHEET_URL = "https://script.google.com/macros/s/AKfycbyp0zx4Thgz1nh4r7OQAwUpE1izZ6gN3hdU85lMSk1vkW9EuKBBRmbGceKt4229e6yZ/exec";
+
+    let currentFilter = 'all';
+    let spkData = [];
+    let lastRenderedSignature = '';
+    
+    try {
+      spkData = JSON.parse(localStorage.getItem('spkData')) || [];
+      if (!Array.isArray(spkData)) spkData = [];
+    } catch (e) {
+      spkData = [];
+    }
+
+    let counter = parseInt(localStorage.getItem('spkCounter')) || 1;
+    let logoData = localStorage.getItem('companyLogo') || '';
+
+    // FUNGSI TOGGLE SIDEBAR (GARIS 3)
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebarMenu');
+      const overlay = document.getElementById('sidebarOverlay');
+      const isOpen = sidebar.classList.contains('translate-x-0');
+      
+      if (isOpen) {
+        sidebar.classList.remove('translate-x-0');
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+      } else {
+        sidebar.classList.remove('-translate-x-full');
+        sidebar.classList.add('translate-x-0');
+        overlay.classList.remove('hidden');
+      }
+    }
+
+    // FUNGSI PINDAH TAMPILAN VIEW (DASHBOARD VS KEUANGAN)
+    function switchView(viewName) {
+      const dashboard = document.getElementById('viewDashboard');
+      const finance = document.getElementById('viewFinance');
+      const navDash = document.getElementById('navDashboard');
+      const navFin = document.getElementById('navFinance');
+
+      if (viewName === 'finance') {
+        dashboard.classList.add('hidden');
+        finance.classList.remove('hidden');
+        navFin.className = 'w-full text-left px-3.5 py-2.5 rounded-xl bg-amber-400 text-slate-950 flex items-center gap-2.5 shadow-sm transition';
+        navDash.className = 'w-full text-left px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center gap-2.5 transition';
+        renderFinanceData();
+      } else {
+        finance.classList.add('hidden');
+        dashboard.classList.remove('hidden');
+        navDash.className = 'w-full text-left px-3.5 py-2.5 rounded-xl bg-amber-400 text-slate-950 flex items-center gap-2.5 shadow-sm transition';
+        navFin.className = 'w-full text-left px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center gap-2.5 transition';
+        renderAdminList(true);
+      }
+    }
+
+    // FUNGSI RENDER DATA KEUANGAN
+    function renderFinanceData() {
+      const tableBody = document.getElementById('financeTableBody');
+      const totalAmountEl = document.getElementById('totalRevenueAmount');
+      const totalUnitsEl = document.getElementById('totalPaidUnitsCount');
+      if (!tableBody) return;
+
+      // Filter hanya yang Lunas
+      const paidList = spkData.filter(item => String(item.paymentStatus || '').trim().toLowerCase() === 'lunas');
+
+      let totalRevenue = 0;
+      paidList.forEach(item => {
+        totalRevenue += parseNumeric(item.biaya);
+      });
+
+      totalAmountEl.innerText = `Rp ${totalRevenue.toLocaleString('id-ID')}`;
+      totalUnitsEl.innerText = `${paidList.length} Unit`;
+
+      if (paidList.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400 font-medium">Belum ada data transaksi keuangan yang lunas.</td></tr>`;
+        return;
+      }
+
+      tableBody.innerHTML = '';
+      paidList.forEach(item => {
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-slate-50 transition';
+        row.innerHTML = `
+          <td class="p-3 font-bold text-slate-900">${item.id}</td>
+          <td class="p-3 font-medium text-slate-800">${item.name || '-'}<br><span class="text-[10px] text-slate-400">${item.phone || '-'}</span></td>
+          <td class="p-3 text-slate-700">${item.type}: ${item.model}<br><span class="text-[10px] text-slate-400">S/N: ${item.sn || '-'}</span></td>
+          <td class="p-3 text-slate-600">${item.rincianBiaya || 'Jasa Service & Kalibrasi'}</td>
+          <td class="p-3 text-right font-black text-emerald-800">Rp ${parseNumeric(item.biaya).toLocaleString('id-ID')}</td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    // LOKAL STORAGE KONTROL SIFAT UNREAD (FINGERPRINT SIGNATURE)
+    function getReadSignatures() {
+      try {
+        return JSON.parse(localStorage.getItem('readSignatures')) || {};
+      } catch(e) {
+        return {};
+      }
+    }
+
+    function saveReadSignature(spkId, status, notes) {
+      const sigs = getReadSignatures();
+      sigs[String(spkId).trim().toUpperCase()] = String(status || '').trim() + "___" + String(notes || '').trim();
+      localStorage.setItem('readSignatures', JSON.stringify(sigs));
+    }
+
+    function isUpdateUnread(item) {
+      if (!item) return false;
+      const updatedBy = String(item.updatedBy || '').toLowerCase();
+      if (!updatedBy.includes('teknisi')) return false;
+
+      const sigs = getReadSignatures();
+      const currentSig = String(item.status || '').trim() + "___" + String(item.notes || '').trim();
+      const savedSig = sigs[String(item.id).trim().toUpperCase()];
+
+      return savedSig !== currentSig;
+    }
+
+    function parseNumeric(val) {
+      if (!val) return 0;
+      if (typeof val === 'number') return isNaN(val) ? 0 : val;
+      const str = String(val).trim();
+      if (str.includes('T') || str.includes('Z') || str.includes(':') || str.includes('/') || str.length > 9) return 0;
+      const cleaned = str.replace(/[^0-9]/g, '');
+      const parsed = parseInt(cleaned, 10);
+      return isNaN(parsed) ? 0 : parsed;
+    }
+
+    function parseTargetDate(dateStr) {
+      if (!dateStr || dateStr === '-') return null;
+      let d = new Date(dateStr);
+      if (!isNaN(d.getTime())) return d;
+
+      const str = String(dateStr).trim();
+      if (str.includes('/')) {
+        const parts = str.split(',');
+        const dateParts = parts[0].trim().split('/');
+        if (dateParts.length === 3) {
+          const day = parseInt(dateParts[0], 10);
+          const month = parseInt(dateParts[1], 10) - 1;
+          const year = parseInt(dateParts[2], 10);
+          let timeStr = parts[1] ? parts[1].trim().replace('.', ':') : '00:00';
+          const timeParts = timeStr.split(':');
+          
+          d = new Date(year, month, day, parseInt(timeParts[0] || 0, 10), parseInt(timeParts[1] || 0, 10));
+          if (!isNaN(d.getTime())) return d;
+        }
+      }
+      return null;
+    }
+
+    function formatDisplayDate(dateStr) {
+      const d = parseTargetDate(dateStr);
+      if (!d) return '-';
+      return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ', ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function getResolvedTech(item) {
+      if (!item) return 'Adib';
+      let tName = String(item.teknisiName || '').trim();
+      if (!tName) {
+        let uBy = String(item.updatedBy || '').trim();
+        if (uBy.toLowerCase().includes('oky')) tName = 'Oky';
+        else tName = 'Adib';
+      }
+      return tName;
+    }
+
+    function sanitizeSPKItem(item) {
+      if (!item) return item;
+      item.biaya = parseNumeric(item.biaya);
+      if (typeof item.rincianBiaya === 'string' && (item.rincianBiaya.includes('T') || item.rincianBiaya.includes('Z'))) {
+        item.rincianBiaya = '';
+      }
+      item.teknisiName = getResolvedTech(item);
+      item.hasUnreadUpdate = isUpdateUnread(item);
+      return item;
+    }
+
+    function saveData() {
+      localStorage.setItem('spkData', JSON.stringify(spkData));
+      localStorage.setItem('spkCounter', counter.toString());
+    }
+
+    function resetCorruptedCache() {
+      if (confirm("Kosongkan cache lokal untuk memuat ulang data bersih dari Google Sheets?")) {
+        localStorage.removeItem('spkData');
+        localStorage.removeItem('readSignatures');
+        spkData = [];
+        loadFromGoogleSheets(true);
+      }
+    }
+
+    function getSpkById(spkId) {
+      if (!spkId) return null;
+      return spkData.find(item => String(item.id).trim().toUpperCase() === String(spkId).trim().toUpperCase()) || null;
+    }
+
+    function playBeepSound() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, ctx.currentTime);
+        osc.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.15);
+      } catch(e) {}
+    }
+
+    function syncToGoogleSheets(item) {
+      try {
+        fetch(DEFAULT_SHEET_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(item)
+        });
+      } catch (err) {
+        console.error("Gagal sync:", err);
+      }
+    }
+
+    async function loadFromGoogleSheets(isInitial = false) {
+      try {
+        const noCacheUrl = DEFAULT_SHEET_URL + (DEFAULT_SHEET_URL.includes('?') ? '&' : '?') + '_nc=' + Date.now();
+        const res = await fetch(noCacheUrl);
+        const data = await res.json();
+
+        if (Array.isArray(data) && data.length > 0) {
+          let hasNewUpdates = false;
+
+          data.forEach(newItem => {
+            sanitizeSPKItem(newItem);
+            const existing = getSpkById(newItem.id);
+
+            if (newItem.hasUnreadUpdate && (!existing || !existing.hasUnreadUpdate)) {
+              hasNewUpdates = true;
+            }
+
+            if (existing) {
+              const isRecentlyEditedLocally = (Date.now() - (existing.lastLocalEdit || 0)) < 10000;
+              if (isRecentlyEditedLocally) {
+                newItem.status = existing.status;
+                newItem.sn = existing.sn;
+                newItem.kelengkapan = existing.kelengkapan;
+                newItem.kondisi = existing.kondisi;
+                newItem.notes = existing.notes;
+                newItem.paymentStatus = existing.paymentStatus;
+                newItem.biaya = existing.biaya;
+                newItem.rincianBiaya = existing.rincianBiaya;
+                newItem.teknisiName = existing.teknisiName || newItem.teknisiName;
+                newItem.lastLocalEdit = existing.lastLocalEdit;
+              }
+            }
+          });
+
+          spkData = data;
+          saveData();
+          renderAdminList();
+          renderFinanceData();
+
+          if (hasNewUpdates && !isInitial) {
+            playBeepSound();
+          }
+        }
+      } catch (err) {
+        console.error("Gagal memuat data dari Google Sheets:", err);
+      }
+    }
+
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'spkData') {
+        try {
+          spkData = JSON.parse(e.newValue) || [];
+          renderAdminList();
+          renderFinanceData();
+        } catch(err) {}
+      }
+    });
+
+    function markAsRead(spkId) {
+      const item = getSpkById(spkId);
+      if (item) {
+        saveReadSignature(item.id, item.status, item.notes);
+        item.hasUnreadUpdate = false;
+        item.updatedBy = 'Admin';
+        item.lastLocalEdit = Date.now();
+        saveData();
+        renderAdminList(true);
+        syncToGoogleSheets(item);
+      }
+    }
+
+    function clearAllNotifications() {
+      spkData.forEach(item => {
+        saveReadSignature(item.id, item.status, item.notes);
+        item.hasUnreadUpdate = false;
+      });
+      saveData();
+      renderAdminList(true);
+    }
+
+    function uploadLogo(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          logoData = event.target.result;
+          localStorage.setItem('companyLogo', logoData);
+          showLogoPreview();
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function removeLogo() {
+      logoData = '';
+      localStorage.removeItem('companyLogo');
+      document.getElementById('inputLogo').value = '';
+      showLogoPreview();
+    }
+
+    function showLogoPreview() {
+      const img = document.getElementById('logoPreview');
+      const btnRem = document.getElementById('btnRemoveLogo');
+      if (logoData) {
+        img.src = logoData;
+        img.classList.remove('hidden');
+        btnRem.classList.remove('hidden');
+      } else {
+        img.src = '';
+        img.classList.add('hidden');
+        btnRem.classList.add('hidden');
+      }
+    }
+
+    function getDeadlineStatus(targetStr, status) {
+      if (status === 'Selesai') return { text: '✅ Selesai', color: 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold', level: 3 };
+      
+      const targetDateObj = parseTargetDate(targetStr);
+      if (!targetDateObj) return { text: 'Tanpa Target Waktu', color: 'bg-slate-100 text-slate-600 border-slate-300', level: 2 };
+
+      const diffHours = (targetDateObj.getTime() - new Date().getTime()) / (1000 * 60 * 60);
+
+      if (diffHours < 0) return { text: `🚨 LEWAT DEADLINE`, color: 'bg-rose-100 text-rose-800 border-rose-300 font-extrabold animate-pulse', level: 0 };
+      if (diffHours <= 24) return { text: `⚠️ DEADLINE DEKAT`, color: 'bg-amber-100 text-amber-900 border-amber-300 font-extrabold', level: 1 };
+      return { text: `⏱️ Sisa ${Math.ceil(diffHours / 24)} Hari`, color: 'bg-amber-300 text-slate-950 border-amber-400 font-black', level: 2 };
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('sheetUrlInput').value = DEFAULT_SHEET_URL;
+      const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      document.getElementById('inputTarget').value = tomorrow.toISOString().slice(0,16);
+      showLogoPreview();
+      renderAdminList();
+      renderFinanceData();
+      loadFromGoogleSheets(true);
+
+      setInterval(() => {
+        loadFromGoogleSheets(false);
+      }, 3000);
+    });
+
+    function createSPK(e) {
+      if (e) e.preventDefault();
+      const now = new Date();
+      const formattedDrop = now.toLocaleDateString('id-ID') + ', ' + now.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
+
+      const estMin = parseNumeric(document.getElementById('inputEstMin').value);
+      const estMax = parseNumeric(document.getElementById('inputEstMax').value);
+      
+      let estimasiText = 'Menunggu Diagnosa';
+      if (estMin > 0 && estMax > 0) {
+        estimasiText = `Rp ${estMin.toLocaleString('id-ID')} - Rp ${estMax.toLocaleString('id-ID')}`;
+      } else if (estMin > 0) {
+        estimasiText = `Rp ${estMin.toLocaleString('id-ID')}`;
+      } else if (estMax > 0) {
+        estimasiText = `Rp ${estMax.toLocaleString('id-ID')}`;
+      }
+
+      const deliveryVal = document.getElementById('inputDeliveryType').value || 'Store';
+      const chosenTech = document.getElementById('inputTeknisi').value || 'Adib';
+
+      let defaultNote = "Unit baru diterima di kasir toko.";
+      if (deliveryVal === 'Ekspedisi') defaultNote = "Unit paket diterima via kurir/ekspedisi.";
+      if (deliveryVal === 'Pedagang_Store') defaultNote = "Unit diterima dari Mitra/Pedagang (Store).";
+      if (deliveryVal === 'Pedagang_Ekspedisi') defaultNote = "Unit diterima dari Mitra/Pedagang (Ekspedisi).";
+
+      const newSpk = {
+        id: `SPK-00${counter++}`,
+        name: document.getElementById('inputName').value,
+        phone: document.getElementById('inputPhone').value,
+        type: document.getElementById('inputType').value,
+        model: document.getElementById('inputModel').value,
+        sn: document.getElementById('inputSN').value || '-',
+        kondisi: document.getElementById('inputKondisi').value || 'Mulus / Sesuai Pemakaian',
+        kelengkapan: document.getElementById('inputKelengkapan').value || 'Unit Only',
+        issue: document.getElementById('inputIssue').value,
+        deliveryType: deliveryVal,
+        estimasiBiaya: estimasiText,
+        teknisiName: chosenTech,
+        status: "Diterima",
+        paymentStatus: "Belum Lunas",
+        notes: defaultNote,
+        createdAt: formattedDrop,
+        targetDate: document.getElementById('inputTarget').value,
+        biaya: 0,
+        rincianBiaya: "",
+        updatedBy: "Admin",
+        hasUnreadUpdate: false,
+        lastLocalEdit: Date.now()
+      };
+
+      saveReadSignature(newSpk.id, newSpk.status, newSpk.notes);
+
+      spkData.unshift(newSpk);
+      saveData();
+      renderAdminList(true);
+      renderFinanceData();
+      syncToGoogleSheets(newSpk);
+      
+      document.getElementById('inputName').value = '';
+      document.getElementById('inputPhone').value = '';
+      document.getElementById('inputModel').value = '';
+      document.getElementById('inputSN').value = '';
+      document.getElementById('inputIssue').value = '';
+      document.getElementById('inputKondisi').value = '';
+      document.getElementById('inputKelengkapan').value = '';
+      document.getElementById('inputEstMin').value = '';
+      document.getElementById('inputEstMax').value = '';
+      document.getElementById('inputDeliveryType').value = 'Store';
+
+      const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      document.getElementById('inputTarget').value = tomorrow.toISOString().slice(0,16);
+
+      sendWaSerahTerima(newSpk);
+    }
+
+    function sendWaSerahTerima(item) {
+      let phone = (item.phone || '').replace(/[^0-9]/g, '');
+      if (phone.startsWith('0')) phone = '62' + phone.slice(1);
+
+      const path = window.location.pathname;
+      const basePath = path.substring(0, path.lastIndexOf('/'));
+      const trackingUrl = `${window.location.origin}${basePath}/index.html?spk=${item.id}`;
+      
+      let metodeTxt = 'Datang Langsung ke Store';
+      if (item.deliveryType === 'Ekspedisi') metodeTxt = 'Kiriman Ekspedisi / Kurir';
+      if (item.deliveryType === 'Pedagang_Store') metodeTxt = 'Mitra / Pedagang (Datang ke Store)';
+      if (item.deliveryType === 'Pedagang_Ekspedisi') metodeTxt = 'Mitra / Pedagang (Kiriman Ekspedisi)';
+
+      const text = `Halo Kak *${item.name}*,\n\nTerima kasih telah melakukan perbaikan unit di *Service Kamera Bogor*.\n\nBerikut *BUKTI TANDA TERIMA UNIT (SPK)* Anda:\n\n📋 *No. SPK:* ${item.id}\n📥 *Waktu Drop:* ${item.createdAt}\n🚚 *Metode Penerimaan:* ${metodeTxt}\n👨‍🔧 *Teknisi Penanggungjawab:* ${item.teknisiName || 'Adib'}\n📷 *Unit:* ${item.type} - ${item.model}\n🔢 *Serial Number (S/N):* ${item.sn || '-'}\n🔍 *Kondisi Fisik:* ${item.kondisi || '-'}\n📦 *Kelengkapan Unit:* ${item.kelengkapan || '-'}\n⚠️ *Keluhan:* ${item.issue}\n💰 *Estimasi Biaya:* ${item.estimasiBiaya || 'Menunggu Diagnosa'}\n\nLacak progress perbaikan unit Anda kapan saja via link berikut:\n${trackingUrl}`;
+
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    function sendWaTagihanById(spkId) {
+      const item = getSpkById(spkId);
+      if (!item) return;
+
+      let phone = (item.phone || '').replace(/[^0-9]/g, '');
+      if (phone.startsWith('0')) phone = '62' + phone.slice(1);
+
+      const path = window.location.pathname;
+      const basePath = path.substring(0, path.lastIndexOf('/'));
+      const trackingUrl = `${window.location.origin}${basePath}/index.html?spk=${item.id}`;
+      const nominal = parseNumeric(item.biaya) > 0 ? `Rp ${parseNumeric(item.biaya).toLocaleString('id-ID')}` : (item.estimasiBiaya || 'Menunggu Diagnosa');
+
+      const text = `Halo Kak *${item.name}*,\n\nIni adalah pengingat tagihan perbaikan unit Anda di *Service Kamera Bogor*.\n\nReceipt / TAGIHAN PEMBAYARAN SERVICE (BELUM LUNAS):\n📋 *No. SPK:* ${item.id}\n📷 *Unit:* ${item.type} - ${item.model} (S/N: ${item.sn || '-'})\n🛠️ *Rincian Pekerjaan:* ${item.rincianBiaya || 'Jasa Service & Kalibrasi Unit'}\n💰 *TOTAL BIAYA:* *${nominal}*\n\n💳 *REKENING PEMBAYARAN:*\nBank BRI: *720001006926530*\na/n *Muhamad Fauzi*\n\nMohon konfirmasi jika sudah transfer. Lacak detail nota & status perbaikan:\n${trackingUrl}`;
+
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    function tagihSemuaWA() {
+      const unpaidList = spkData.filter(item => item.status === 'Selesai' && item.paymentStatus !== 'Lunas' && (parseNumeric(item.biaya) > 0 || (item.estimasiBiaya && item.estimasiBiaya !== 'Menunggu Diagnosa')));
+
+      if (unpaidList.length === 0) {
+        alert("Tidak ada unit SPK yang SELESAI & BELUM LUNAS dengan nominal tagihan.");
+        return;
+      }
+
+      if (confirm(`Ditemukan ${unpaidList.length} SPK Selesai Belum Lunas.\n\nApakah Anda ingin membuka pesan WhatsApp tagihan secara otomatis untuk semua pelanggan ini?`)) {
+        unpaidList.forEach((item, index) => {
+          setTimeout(() => {
+            sendWaTagihanById(item.id);
+          }, index * 1200);
+        });
+      }
+    }
+
+    function togglePaymentStatus(spkId) {
+      const item = getSpkById(spkId);
+      if (!item) return;
+      item.paymentStatus = (item.paymentStatus === 'Lunas') ? 'Belum Lunas' : 'Lunas';
+      item.updatedBy = 'Admin';
+      saveReadSignature(item.id, item.status, item.notes);
+      item.hasUnreadUpdate = false;
+      item.lastLocalEdit = Date.now();
+      saveData();
+      renderAdminList(true);
+      renderFinanceData();
+      syncToGoogleSheets(item);
+    }
+
+    function editSPK(spkId) {
+      const item = getSpkById(spkId);
+      if (!item) return;
+
+      const newTeknisi = prompt("Edit Penunjukan Teknisi (Adib / Oky):", item.teknisiName || "Adib");
+      if (newTeknisi === null) return;
+
+      const newName = prompt("Edit Nama Pelanggan:", item.name);
+      if (newName === null) return;
+
+      const newPhone = prompt("Edit No. WhatsApp:", item.phone);
+      if (newPhone === null) return;
+
+      const newSN = prompt("Edit Serial Number (S/N):", item.sn || "-");
+      if (newSN === null) return;
+
+      const newKondisi = prompt("Edit Kondisi Fisik Diterima:", item.kondisi || "Mulus / Sesuai Pemakaian");
+      if (newKondisi === null) return;
+
+      const newKelengkapan = prompt("Edit Kelengkapan Unit:", item.kelengkapan || "Unit Only");
+      if (newKelengkapan === null) return;
+
+      const newIssue = prompt("Edit Keluhan Perangkat:", item.issue || "-");
+      if (newIssue === null) return;
+
+      const newEst = prompt("Edit Estimasi Biaya (contoh: Rp 300.000 - Rp 500.000):", item.estimasiBiaya || "Menunggu Diagnosa");
+      if (newEst === null) return;
+
+      const newBiaya = prompt("Edit Total Biaya Akhir/Pelunasan (Rp):", parseNumeric(item.biaya));
+      if (newBiaya === null) return;
+
+      const newRincian = prompt("Edit Rincian Pekerjaan / Sparepart:", item.rincianBiaya || "");
+
+      item.teknisiName = newTeknisi.trim() || item.teknisiName;
+      item.name = newName.trim() || item.name;
+      item.phone = newPhone.trim() || item.phone;
+      item.sn = newSN.trim() || item.sn;
+      item.kondisi = newKondisi.trim() || item.kondisi;
+      item.kelengkapan = newKelengkapan.trim() || item.kelengkapan;
+      item.issue = newIssue.trim() || item.issue;
+      item.estimasiBiaya = newEst.trim() || item.estimasiBiaya;
+      item.biaya = parseNumeric(newBiaya);
+      if (newRincian !== null) item.rincianBiaya = newRincian.trim();
+
+      item.updatedBy = 'Admin';
+      saveReadSignature(item.id, item.status, item.notes);
+      item.hasUnreadUpdate = false;
+      item.lastLocalEdit = Date.now();
+
+      saveData();
+      renderAdminList(true);
+      renderFinanceData();
+      syncToGoogleSheets(item);
+    }
+
+    function processPayment(spkId) {
+      const item = getSpkById(spkId);
+      if (!item) return;
+
+      const defaultBiaya = parseNumeric(item.biaya) || "350000";
+      const inputBiaya = prompt(`Konfirmasi Pelunasan SPK ${item.id}\nMasukkan / Konfirmasi Total Biaya Service (Rp):`, defaultBiaya);
+      
+      if (inputBiaya !== null) {
+        item.biaya = parseNumeric(inputBiaya);
+        if (!item.rincianBiaya) {
+          item.rincianBiaya = prompt("Masukkan Rincian Pekerjaan / Sparepart:", "Jasa Service & Kalibrasi Unit") || "";
+        }
+        item.status = "Selesai";
+        item.paymentStatus = "Lunas";
+        item.updatedBy = 'Admin';
+        saveReadSignature(item.id, item.status, item.notes);
+        item.hasUnreadUpdate = false;
+        item.lastLocalEdit = Date.now();
+        
+        saveData();
+        renderAdminList(true);
+        renderFinanceData();
+        syncToGoogleSheets(item);
+        sendWaInvoice(item);
+      }
+    }
+
+    function updateStatus(spkId, newStatus) {
+      const item = getSpkById(spkId);
+      if (!item) return;
+
+      item.status = newStatus;
+      item.updatedBy = 'Admin';
+      
+      if (newStatus === 'Selesai') {
+        if (parseNumeric(item.biaya) === 0) {
+          const inputBiaya = prompt(`Perbaikan Selesai!\nMasukkan Total Biaya Akhir Pelanggan (Rp):`, "350000");
+          if (inputBiaya !== null) {
+            item.biaya = parseNumeric(inputBiaya);
+            item.rincianBiaya = prompt("Masukkan Rincian Pekerjaan / Sparepart:", item.rincianBiaya || "Jasa Service & Kalibrasi Unit") || "";
+          }
+        }
+        item.paymentStatus = "Belum Lunas";
+      }
+
+      saveReadSignature(item.id, item.status, item.notes);
+      item.hasUnreadUpdate = false;
+      item.lastLocalEdit = Date.now();
+
+      saveData();
+      renderAdminList(true);
+      renderFinanceData();
+      syncToGoogleSheets(item);
+    }
+
+    function updateSN(spkId, newSN) {
+      const item = getSpkById(spkId);
+      if (item) {
+        item.sn = newSN;
+        item.updatedBy = 'Admin';
+        saveReadSignature(item.id, item.status, item.notes);
+        item.hasUnreadUpdate = false;
+        item.lastLocalEdit = Date.now();
+        saveData();
+        renderAdminList(true);
+        syncToGoogleSheets(item);
+      }
+    }
+
+    function updateKelengkapan(spkId, newKel) {
+      const item = getSpkById(spkId);
+      if (item) {
+        item.kelengkapan = newKel;
+        item.updatedBy = 'Admin';
+        saveReadSignature(item.id, item.status, item.notes);
+        item.hasUnreadUpdate = false;
+        item.lastLocalEdit = Date.now();
+        saveData();
+        renderAdminList(true);
+        syncToGoogleSheets(item);
+      }
+    }
+
+    function updateKondisi(spkId, newKondisi) {
+      const item = getSpkById(spkId);
+      if (item) {
+        item.kondisi = newKondisi;
+        item.updatedBy = 'Admin';
+        saveReadSignature(item.id, item.status, item.notes);
+        item.hasUnreadUpdate = false;
+        item.lastLocalEdit = Date.now();
+        saveData();
+        renderAdminList(true);
+        syncToGoogleSheets(item);
+      }
+    }
+
+    function updateNotes(spkId, newNotes) {
+      const item = getSpkById(spkId);
+      if (item) {
+        item.notes = newNotes;
+        item.updatedBy = 'Admin';
+        saveReadSignature(item.id, item.status, newNotes);
+        item.hasUnreadUpdate = false;
+        item.lastLocalEdit = Date.now();
+        saveData();
+        renderAdminList(true);
+        syncToGoogleSheets(item);
+      }
+    }
+
+    function sendWaInvoice(item) {
+      let phone = (item.phone || '').replace(/[^0-9]/g, '');
+      if (phone.startsWith('0')) phone = '62' + phone.slice(1);
+
+      const path = window.location.pathname;
+      const basePath = path.substring(0, path.lastIndexOf('/'));
+      const trackingUrl = `${window.location.origin}${basePath}/index.html?spk=${item.id}`;
+
+      const text = `Halo Kak *${item.name}*,\n\nPerbaikan unit Kamera/Lensa Anda telah *SELESAI* dikerjakan dan siap diambil/dikirim.\n\nReceipt / INVOICE PEMBAYARAN SERVICE:\n📋 *No. SPK:* ${item.id}\n📷 *Unit:* ${item.type} - ${item.model} (S/N: ${item.sn || '-'})\n🛠️ *Rincian:* ${item.rincianBiaya || 'Jasa Service Complete'}\n💰 *TOTAL BIAYA:* *Rp ${parseNumeric(item.biaya).toLocaleString('id-ID')}*\n\n💳 *REKENING PEMBAYARAN:*\nBank BRI: *720001006926530*\na/n *Muhamad Fauzi*\n\nLacak detail nota & status perbaikan:\n${trackingUrl}`;
+
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    function setFilter(filterType) {
+      currentFilter = filterType;
+      
+      const filterBtns = ['All', 'Update', 'Active', 'Unpaid', 'Warning', 'Completed', 'Ekspedisi', 'Pedagang', 'BtnAdib', 'BtnOky'];
+      filterBtns.forEach(f => {
+        const btn = document.getElementById(`filter${f}`);
+        if (btn) {
+          const btnKey = f.replace('Btn', '').toLowerCase();
+          if (btnKey === filterType.toLowerCase()) {
+            btn.className = 'px-2 py-1 rounded-lg bg-amber-400 text-slate-950 font-extrabold';
+          } else {
+            btn.className = 'px-2 py-1 rounded-lg bg-slate-200 text-slate-700 font-bold';
+          }
+        }
+      });
+
+      renderAdminList(true);
+    }
+
+    function renderAdminList(forceRender = false) {
+      const container = document.getElementById('adminSpkList');
+      if (!container) return;
+
+      const activeEl = document.activeElement;
+      if (!forceRender && activeEl && container.contains(activeEl)) {
+        return;
+      }
+
+      const searchInput = document.getElementById('adminSearchInput');
+      const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+      let unreadCount = 0;
+
+      const adibActiveCount = spkData.filter(item => {
+        sanitizeSPKItem(item);
+        const techName = String(item.teknisiName || '').toLowerCase();
+        return techName.includes('adib') && String(item.status || '').trim() !== 'Selesai';
+      }).length;
+
+      const okyActiveCount = spkData.filter(item => {
+        sanitizeSPKItem(item);
+        const techName = String(item.teknisiName || '').toLowerCase();
+        return techName.includes('oky') && String(item.status || '').trim() !== 'Selesai';
+      }).length;
+
+      document.getElementById('countAdibActive').innerText = adibActiveCount;
+      document.getElementById('countOkyActive').innerText = okyActiveCount;
+      document.getElementById('countTotalSummary').innerText = spkData.length;
+
+      let filtered = spkData.filter(item => {
+        sanitizeSPKItem(item);
+
+        if (item.hasUnreadUpdate) unreadCount++;
+
+        if (currentFilter === 'adib') {
+          const matchTech = String(item.teknisiName || '').toLowerCase().includes('adib');
+          if (!matchTech) return false;
+        }
+
+        if (currentFilter === 'oky') {
+          const matchTech = String(item.teknisiName || '').toLowerCase().includes('oky');
+          if (!matchTech) return false;
+        }
+
+        if (currentFilter === 'update' && !item.hasUnreadUpdate) return false;
+        if (currentFilter === 'active' && item.status === 'Selesai') return false;
+        if (currentFilter === 'completed' && item.status !== 'Selesai') return false;
+        if (currentFilter === 'unpaid' && (item.status !== 'Selesai' || item.paymentStatus === 'Lunas')) return false;
+        if (currentFilter === 'warning') {
+          if (item.status === 'Selesai') return false;
+          if (getDeadlineStatus(item.targetDate, item.status).level > 1) return false;
+        }
+        if (currentFilter === 'ekspedisi' && (item.deliveryType !== 'Ekspedisi' && item.deliveryType !== 'Pedagang_Ekspedisi')) return false;
+        if (currentFilter === 'pedagang' && !String(item.deliveryType || '').startsWith('Pedagang')) return false;
+
+        if (query) {
+          const matchId = String(item.id || '').toLowerCase().includes(query);
+          const matchName = String(item.name || '').toLowerCase().includes(query);
+          const matchPhone = String(item.phone || '').toLowerCase().includes(query);
+          const matchSN = String(item.sn || '').toLowerCase().includes(query);
+          if (!matchId && !matchName && !matchPhone && !matchSN) return false;
+        }
+
+        return true;
+      });
+
+      const banner = document.getElementById('globalNotifBanner');
+      const bannerText = document.getElementById('globalNotifText');
+      if (unreadCount > 0) {
+        bannerText.innerText = `🔔 Terdapat ${unreadCount} SPK dengan update progress baru dari teknisi!`;
+        banner.classList.remove('hidden');
+      } else {
+        banner.classList.add('hidden');
+      }
+
+      filtered.sort((a, b) => {
+        if (a.hasUnreadUpdate && !b.hasUnreadUpdate) return -1;
+        if (!a.hasUnreadUpdate && b.hasUnreadUpdate) return 1;
+
+        const numA = parseInt(String(a.id).replace(/\D/g, '')) || 0;
+        const numB = parseInt(String(b.id).replace(/\D/g, '')) || 0;
+        return numA - numB;
+      });
+
+      const newSignature = JSON.stringify(filtered.map(i => `${i.id}_${i.status}_${i.notes}_${i.sn}_${i.kondisi}_${i.kelengkapan}_${i.biaya}_${i.hasUnreadUpdate}_${i.paymentStatus}`)) + "_" + currentFilter + "_" + query;
+
+      if (!forceRender && newSignature === lastRenderedSignature) {
+        return;
+      }
+      lastRenderedSignature = newSignature;
+
+      container.innerHTML = '';
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-400 text-center py-6 font-medium">Tidak ada data SPK yang cocok.</p>';
+        return;
+      }
+
+      filtered.forEach((item) => {
+        const deadline = getDeadlineStatus(item.targetDate, item.status);
+        
+        let deliveryBadge = `<span class="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-300 font-bold">🏪 Store</span>`;
+        if (item.deliveryType === 'Ekspedisi') {
+          deliveryBadge = `<span class="text-[10px] px-2 py-0.5 rounded bg-purple-100 text-purple-800 border border-purple-300 font-bold">📦 Ekspedisi</span>`;
+        } else if (item.deliveryType === 'Pedagang_Store') {
+          deliveryBadge = `<span class="text-[10px] px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 font-bold">🤝 Pedagang (Store)</span>`;
+        } else if (item.deliveryType === 'Pedagang_Ekspedisi') {
+          deliveryBadge = `<span class="text-[10px] px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 font-bold">🤝 Pedagang (Ekspedisi)</span>`;
+        }
+
+        const isPaid = item.paymentStatus === 'Lunas';
+        
+        let payBadge = '';
+        if (item.status === 'Selesai') {
+          payBadge = isPaid
+            ? `<button onclick="togglePaymentStatus('${item.id}')" title="Klik untuk ubah status" class="text-[10px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 font-extrabold transition">✅ LUNAS</button>`
+            : `<button onclick="togglePaymentStatus('${item.id}')" title="Klik untuk ubah status" class="text-[10px] px-2 py-0.5 rounded bg-rose-100 text-rose-800 border border-rose-300 font-extrabold transition">🔴 BELUM LUNAS</button>`;
+        }
+
+        let notesVal = String(item.notes || '').trim();
+        if (!notesVal || notesVal.toLowerCase() === 'admin' || notesVal.toLowerCase() === 'teknisi' || notesVal.includes('/202') || notesVal.includes('-202') || notesVal.includes('T')) {
+          notesVal = "Unit baru diterima di kasir toko.";
+        }
+
+        let kondisiVal = String(item.kondisi || '').trim();
+        if (!kondisiVal) kondisiVal = "Mulus / Sesuai Pemakaian";
+
+        const snVal = String(item.sn || '-').trim();
+        const kelengkapanVal = String(item.kelengkapan || 'Unit Only').trim();
+        const issueVal = String(item.issue || '-').trim();
+        const biayaAkhirNum = parseNumeric(item.biaya);
+        const rincianTxt = (item.rincianBiaya && !item.rincianBiaya.includes('T')) ? `(${item.rincianBiaya})` : '';
+
+        const tekName = item.teknisiName || 'Adib';
+        const badgeTechColor = tekName.toLowerCase().includes('adib') ? 'bg-amber-100 text-slate-900 border-amber-300' : 'bg-blue-100 text-blue-900 border-blue-300';
+
+        const isUpdated = item.hasUnreadUpdate;
+        const updateBadgeHtml = isUpdated ? `
+          <div onclick="markAsRead('${item.id}')" class="animate-breathing bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-[10px] px-2.5 py-1 rounded-full cursor-pointer shadow flex items-center gap-1 transition-all">
+            <span>🔔 UPDATE TEKNISI</span>
+            <span class="text-[9px] underline">(Tandai Dibaca)</span>
+          </div>
+        ` : '';
+
+        const card = document.createElement('div');
+        card.className = `p-4 border rounded-2xl bg-slate-50 space-y-3 transition-all shadow-sm ${isUpdated ? 'border-amber-400 ring-2 ring-amber-300 bg-amber-50/60' : (deadline.level === 0 ? 'border-rose-300 bg-rose-50/50' : 'border-slate-200')}`;
+        
+        card.innerHTML = `
+          <div class="flex justify-between items-start gap-2">
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-black text-sm text-slate-900 bg-amber-300 px-2 py-0.5 rounded border border-amber-400">${item.id}</span>
+                <span class="text-[10px] px-2 py-0.5 rounded font-extrabold border ${badgeTechColor}">👨‍🔧 Teknisi: ${tekName}</span>
+                ${deliveryBadge}
+                ${payBadge}
+                ${updateBadgeHtml}
+              </div>
+              <span class="text-xs text-slate-800 font-bold block mt-1">${item.name} (${item.phone})</span>
+              <p class="text-[11px] text-slate-500 mt-0.5">📥 Drop: ${item.createdAt || '-'}</p>
+            </div>
+            <span class="text-[11px] px-2 py-1 rounded border ${deadline.color}">${deadline.text}</span>
+          </div>
+
+          <div class="space-y-1 text-xs border-t border-slate-200 pt-2">
+            <p class="text-sm font-extrabold text-slate-900">${item.type}: ${item.model} <span class="text-xs text-slate-700 font-mono bg-amber-100 px-1 py-0.5 rounded">(S/N: ${snVal})</span></p>
+            <p class="text-slate-700"><span class="text-slate-500 font-semibold">Kelengkapan:</span> <span class="text-slate-900 font-bold">${kelengkapanVal}</span></p>
+            <p class="text-slate-700"><span class="text-slate-500 font-semibold">Kondisi Fisik:</span> <span class="text-slate-900">${kondisiVal}</span></p>
+            <p class="text-rose-600"><span class="text-slate-500 font-semibold">Keluhan:</span> ${issueVal}</p>
+            <p class="text-slate-800 font-bold"><span class="text-slate-500 font-semibold">Estimasi Biaya:</span> ${item.estimasiBiaya || 'Menunggu Diagnosa'}</p>
+            <p class="text-slate-950 font-black text-xs"><span class="text-slate-500 font-semibold">Total Biaya Akhir:</span> Rp ${biayaAkhirNum.toLocaleString('id-ID')} ${rincianTxt}</p>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2 pt-2 border-t border-slate-200">
+            <div>
+              <label class="block text-[10px] text-slate-700 font-bold mb-0.5">Edit Serial Number (S/N):</label>
+              <input type="text" value="${snVal}" onchange="updateSN('${item.id}', this.value)" placeholder="Edit Serial Number..." class="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white text-slate-900 outline-none focus:border-amber-400 font-medium">
+            </div>
+            <div>
+              <label class="block text-[10px] text-slate-700 font-bold mb-0.5">Edit Kelengkapan Unit:</label>
+              <input type="text" value="${kelengkapanVal}" onchange="updateKelengkapan('${item.id}', this.value)" placeholder="Edit Kelengkapan..." class="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white text-slate-900 outline-none focus:border-amber-400 font-medium">
+            </div>
+            <div>
+              <label class="block text-[10px] text-slate-700 font-bold mb-0.5">Edit Kondisi Fisik:</label>
+              <input type="text" value="${kondisiVal}" onchange="updateKondisi('${item.id}', this.value)" placeholder="Edit Kondisi Fisik..." class="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white text-slate-900 outline-none focus:border-amber-400 font-medium">
+            </div>
+            <div>
+              <label class="block text-[10px] text-slate-700 font-bold mb-0.5">Edit Catatan Progress:</label>
+              <input type="text" value="${notesVal}" onchange="updateNotes('${item.id}', this.value)" placeholder="Edit Catatan Progress..." class="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white text-slate-900 outline-none focus:border-amber-400 font-medium">
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-2 pt-2 border-t border-slate-200">
+            <select onchange="updateStatus('${item.id}', this.value)" class="text-xs p-2 border border-slate-300 rounded-lg flex-1 bg-white text-slate-900 font-bold outline-none focus:border-amber-400">
+              ${STATUS_STAGES.map(s => `<option value="${s}" ${item.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+            </select>
+            
+            <button onclick="editSPK('${item.id}')" class="text-xs bg-amber-400 hover:bg-amber-500 text-slate-950 font-extrabold px-3 py-2 rounded-lg transition shadow-sm">
+              ✏️ Edit / Ganti Teknisi
+            </button>
+            <button onclick="processPayment('${item.id}')" class="text-xs bg-slate-900 hover:bg-slate-800 text-amber-400 font-extrabold px-3 py-2 rounded-lg transition shadow-sm">
+              💳 Bayar
+            </button>
+            ${(item.status === 'Selesai' && !isPaid) ? `
+              <button onclick="sendWaTagihanById('${item.id}')" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-2 rounded-lg transition shadow-sm">
+                💬 Tagih WA
+              </button>
+            ` : ''}
+            <button onclick="printSPK('${item.id}')" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold px-3 py-2 rounded-lg transition">
+              🖨️ Cetak SPK
+            </button>
+            <button onclick="printSPKWithQR('${item.id}')" class="text-xs bg-slate-800 hover:bg-slate-900 text-white font-bold px-3 py-2 rounded-lg transition shadow-sm">
+              📱 Cetak SPK + QR
+            </button>
+            ${item.status === 'Selesai' ? `
+              <button onclick="printInvoice('${item.id}')" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-2 rounded-lg transition shadow-sm">
+                🧾 Cetak Invoice
+              </button>
+            ` : ''}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function printSPK(spkId) {
+      renderPrintSPKTemplate(spkId, false);
+    }
+
+    function printSPKWithQR(spkId) {
+      renderPrintSPKTemplate(spkId, true);
+    }
+
+    function renderPrintSPKTemplate(spkId, includeQR) {
+      const item = getSpkById(spkId);
+      if (!item) {
+        alert("Data SPK tidak ditemukan!");
+        return;
+      }
+
+      const logoHtml = logoData ? `<img src="${logoData}" style="max-height: 55px; max-width: 160px; object-fit: contain; margin-bottom: 5px;">` : '';
+      const isEkspedisi = item.deliveryType === 'Ekspedisi' || item.deliveryType === 'Pedagang_Ekspedisi';
+      const isPedagang = String(item.deliveryType || '').startsWith('Pedagang');
+
+      const oldTitle = document.title;
+      document.title = `SPK_${item.id}_${(item.name || 'Pelanggan').replace(/\s+/g, '_')}`;
+
+      let metodePrintText = "Datang Langsung ke Store";
+      let statusBadgeText = "DITERIMA STORE";
+
+      if (item.deliveryType === 'Ekspedisi') {
+        metodePrintText = "Kiriman Ekspedisi / Kurir";
+        statusBadgeText = "KIRIMAN EKSPEDISI";
+      } else if (item.deliveryType === 'Pedagang_Store') {
+        metodePrintText = "Mitra / Pedagang (Datang ke Store)";
+        statusBadgeText = "PEDAGANG STORE";
+      } else if (item.deliveryType === 'Pedagang_Ekspedisi') {
+        metodePrintText = "Mitra / Pedagang (Kiriman Ekspedisi)";
+        statusBadgeText = "PEDAGANG EKSPEDISI";
+      }
+
+      // Syarat & Ketentuan dengan bullet point (•) agar rapi dan tidak bertumpuk
+      let termsHtml = `
+        <li style="margin-bottom: 3px; padding-left: 4px;">SPK ini berlaku sebagai tanda terima unit dan harus disertakan kembali pada waktu pengambilan unit.</li>
+        <li style="margin-bottom: 3px; padding-left: 4px;">Konfirmasi service akan dikirimkan ke pelanggan apabila diperlukan penggantian spare part. Bila tidak ada spare part yang perlu diganti kami akan melakukan servis sesuai biaya estimasi di awal.</li>
+        <li style="margin-bottom: 3px; padding-left: 4px;">Apabila permohonan konfirmasi servis tidak ditanggapi selama 1 minggu kalender, maka servis dianggap batal.</li>
+        <li style="margin-bottom: 3px; padding-left: 4px;">Garansi servis berlaku 30 hari kalender untuk kerusakan yang sama dan bukan disebabkan oleh salah pemakaian atau bencana alam.</li>
+        <li style="margin-bottom: 0; padding-left: 4px;">Apabila unit selesai tidak diambil lebih dari 3 (tiga) bulan kalender sejak tanggal diterima, maka kami berhak melakukan daur ulang (recycle), unit tidak dapat diambil kembali oleh pelanggan, serta tidak ada tuntutan ganti rugi atau tanggung jawab apapun di kemudian hari kepada Service Kamera Bogor.</li>
+      `;
+
+      let ttdPelangganHtml = `
+        <p style="margin: 0;">Yang Menyerahkan (Pelanggan),</p>
+        <div style="height: 45px;"></div>
+        <p style="margin: 0; font-weight: bold; text-decoration: underline;">(${item.name || 'Pelanggan'})</p>
+      `;
+
+      if (isEkspedisi) {
+        ttdPelangganHtml = `
+          <p style="margin: 0;">Pelanggan (Via Ekspedisi / Kurir),</p>
+          <div style="height: 45px; display: flex; align-items: center; justify-content: center; font-style: italic; font-size: 8pt; color: #555;">[ Non-Tatap Muka / Digital ]</div>
+          <p style="margin: 0; font-weight: bold; text-decoration: underline;">(${item.name || 'Pelanggan'})</p>
+        `;
+      } else if (isPedagang) {
+        ttdPelangganHtml = `
+          <p style="margin: 0;">Mitra / Pedagang,</p>
+          <div style="height: 45px;"></div>
+          <p style="margin: 0; font-weight: bold; text-decoration: underline;">(${item.name || 'Pelanggan'})</p>
+        `;
+      }
+
+      const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(item.id)}`;
+      const qrCodeHtml = includeQR ? `
+        <div style="margin-top: 8px; text-align: right;">
+          <img id="printQrImg" src="${qrImgUrl}" style="width: 70px; height: 70px; border: 1px solid #000; padding: 2px; display: inline-block;">
+        </div>
+      ` : '';
+
+      const displayTargetDate = formatDisplayDate(item.targetDate);
+
+      document.getElementById('printableArea').innerHTML = `
+        <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; color: #000; line-height: 1.35;">
+          <table style="width: 100%; border-collapse: collapse; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 12px;">
+            <tr>
+              <td style="vertical-align: top; width: 55%;">
+                ${logoHtml}
+                <h2 style="margin: 0; font-size: 15pt; font-weight: bold; text-transform: uppercase;">SERVICE KAMERA BOGOR</h2>
+                <p style="margin: 2px 0 0 0; font-size: 8.5pt;">Ruko, Jl. Bumi Sentosa Raya No.7, Nanggewer Mekar, Kec. Cibinong, Kabupaten Bogor, Jawa Barat 16912</p>
+                <p style="margin: 0; font-size: 8.5pt;">Telp/WA: 0895-6000-70007</p>
+              </td>
+              <td style="text-align: right; vertical-align: top; width: 45%;">
+                <h3 style="margin: 0; font-size: 13pt; text-transform: uppercase;">BUKTI SERAH TERIMA</h3>
+                <p style="margin: 3px 0 0 0; font-size: 10pt; font-weight: bold;">No. SPK: ${item.id}</p>
+                <p style="margin: 0; font-size: 8.5pt;">Waktu Drop: ${item.createdAt || '-'}</p>
+                <div style="margin-top: 4px; display: inline-block; border: 1px solid #000; padding: 2px 6px; font-size: 8pt; font-weight: bold; text-transform: uppercase;">METODE: ${statusBadgeText}</div>
+                ${qrCodeHtml}
+              </td>
+            </tr>
+          </table>
+
+          <div style="font-size: 9pt; font-weight: bold; margin-bottom: 4px; text-transform: uppercase;">INFORMASI SERVICE & PELANGGAN</div>
+          <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt; border: 1px solid #000; margin-bottom: 10px;">
+            <tr>
+              <td style="padding: 5px 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #000; border-right: 1px solid #000; background: #f0f0f0;">Nama Pelanggan</td>
+              <td style="padding: 5px 7px; border-bottom: 1px solid #000;">${item.name || '-'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 5px 7px; font-weight: bold; border-bottom: 1px solid #000; border-right: 1px solid #000; background: #f0f0f0;">No. WhatsApp / HP</td>
+              <td style="padding: 5px 7px; border-bottom: 1px solid #000;">${item.phone || '-'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 5px 7px; font-weight: bold; border-bottom: 1px solid #000; border-right: 1px solid #000; background: #f0f0f0;">Metode Penerimaan</td>
+              <td style="padding: 5px 7px; border-bottom: 1px solid #000;"><strong>${metodePrintText}</strong></td>
+            </tr>
+            <tr>
+              <td style="padding: 5px 7px; font-weight: bold; border-bottom: 1px solid #000; border-right: 1px solid #000; background: #f0f0f0;">Teknisi Penanggungjawab</td>
+              <td style="padding: 5px 7px; border-bottom: 1px solid #000;"><strong>Teknisi ${item.teknisiName || 'Adib'}</strong></td>
+            </tr>
+            <tr>
+              <td style="padding: 5px 7px; font-weight: bold; border-bottom: 1px solid #000; border-right: 1px solid #000; background: #f0f0f0;">Perangkat (Unit)</td>
+              <td style="padding: 5px 7px; border-bottom: 1px solid #000;"><strong>${item.type || 'Kamera'} - ${item.model || '-'}</strong></td>
+            </tr>
+            <tr>
+              <td style="padding: 5px 7px; font-weight: bold; border-bottom: 1px solid #000; border-right: 1px solid #000; background: #f0f0f0;">Serial Number (S/N)</td>
+              <td style="padding: 5px 7px; border-bottom: 1px solid #000;"><strong>${item.sn || '-'}</strong></td>
+            </tr>
+            <tr>
+              <td style="padding: 5px 7px; font-weight: bold; border-bottom: 1px solid #000; border-right: 1px solid #000; background: #f0f0f0;">Kondisi Fisik Diterima</td>
+              <td style="padding: 5px 7px; border-bottom: 1px solid #000;"><strong>${item.kondisi || '-'}</strong></td>
+            </tr>
+            <tr>
+              <td style="padding: 5px 7px; font-weight: bold; border-bottom: 1px solid #000; border-right: 1px solid #000; background: #f0f0f0;">Kelengkapan Unit Diterima</td>
+              <td style="padding: 5px 7px; border-bottom: 1px solid #000;"><strong>${item.kelengkapan || 'Unit Only'}</strong></td>
+            </tr>
+            <tr>
+              <td style="padding: 5px 7px; font-weight: bold; border-bottom: 1px solid #000; border-right: 1px solid #000; background: #f0f0f0;">Deskripsi Keluhan</td>
+              <td style="padding: 5px 7px; border-bottom: 1px solid #000;">${item.issue || '-'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 5px 7px; font-weight: bold; border-bottom: 1px solid #000; border-right: 1px solid #000; background: #f0f0f0;">Estimasi Biaya Perbaikan</td>
+              <td style="padding: 5px 7px; border-bottom: 1px solid #000;"><strong>${item.estimasiBiaya || 'Menunggu Diagnosa'}</strong></td>
+            </tr>
+            <tr>
+              <td style="padding: 5px 7px; font-weight: bold; border-right: 1px solid #000; background: #f0f0f0;">Target Estimasi Selesai</td>
+              <td style="padding: 5px 7px;"><strong>${displayTargetDate}</strong></td>
+            </tr>
+          </table>
+
+          <div style="border: 1px solid #000; padding: 6px 8px; font-size: 7pt; margin-top: 10px;">
+            <strong>Syarat & Ketentuan Service:</strong>
+            <ul style="margin: 2px 0 0 0; padding-left: 14px; list-style-type: disc;">
+              ${termsHtml}
+            </ul>
+          </div>
+
+          <table style="width: 100%; margin-top: 25px; border-collapse: collapse; font-size: 8.5pt;">
+            <tr>
+              <td style="width: 50%; text-align: center; vertical-align: top;">
+                ${ttdPelangganHtml}
+              </td>
+              <td style="width: 50%; text-align: center; vertical-align: top;">
+                <p style="margin: 0;">Penerima (Kasir / Admin),</p>
+                <div style="height: 40px;"></div>
+                <p style="margin: 0; font-weight: bold; text-decoration: underline;">(Service Kamera Bogor)</p>
+              </td>
+            </tr>
+          </table>
+        </div>
+      `;
+
+      const triggerPrint = () => {
+        window.print();
+        setTimeout(() => { document.title = oldTitle; }, 1000);
+      };
+
+      if (includeQR) {
+        const img = document.getElementById('printQrImg');
+        if (img) {
+          if (img.complete) {
+            triggerPrint();
+          } else {
+            img.onload = triggerPrint;
+            img.onerror = triggerPrint;
+            setTimeout(triggerPrint, 600);
+          }
+        } else {
+          triggerPrint();
+        }
+      } else {
+        triggerPrint();
+      }
+    }
+
+    function printInvoice(spkId) {
+      const item = getSpkById(spkId);
+      if (!item) {
+        alert("Data SPK tidak ditemukan!");
+        return;
+      }
+
+      const logoHtml = logoData ? `<img src="${logoData}" style="max-height: 55px; max-width: 160px; object-fit: contain; margin-bottom: 5px;">` : '';
+      
+      const isEkspedisi = item.deliveryType === 'Ekspedisi' || item.deliveryType === 'Pedagang_Ekspedisi';
+      const isPedagang = String(item.deliveryType || '').startsWith('Pedagang');
+
+      const oldTitle = document.title;
+      document.title = `Invoice_${item.id}_${(item.name || 'Pelanggan').replace(/\s+/g, '_')}`;
+
+      let statusPengirimanTxt = "Pengambilan di Store";
+      let catGaransi = "• Unit telah diuji coba dan berfungsi normal.<br>• Garansi service berlaku selama <strong>30 Hari</strong> untuk jenis kerusakan yang sama.";
+
+      if (isEkspedisi) {
+        statusPengirimanTxt = "Pengiriman Via Kurir / Ekspedisi";
+        catGaransi = "• Unit dikirimkan kembali menggunakan kurir / ekspedisi.<br>• Garansi service berlaku selama <strong>30 Hari</strong> terhitung sejak paket diterima pelanggan.";
+      } else if (isPedagang) {
+        statusPengirimanTxt = "Mitra / Pedagang";
+        catGaransi = "• Unit telah diuji coba dan diserahterimakan kepada mitra pedagang.<br>• Garansi service berlaku selama <strong>30 Hari</strong> sesuai ketentuan garansi mitra.";
+      }
+
+      const biayaAkhirNum = parseNumeric(item.biaya);
+
+      document.getElementById('printableArea').innerHTML = `
+        <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; color: #000; line-height: 1.4;">
+          <table style="width: 100%; border-collapse: collapse; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px;">
+            <tr>
+              <td style="vertical-align: top; width: 60%;">
+                ${logoHtml}
+                <h2 style="margin: 0; font-size: 15pt; font-weight: bold; text-transform: uppercase;">SERVICE KAMERA BOGOR</h2>
+                <p style="margin: 2px 0 0 0; font-size: 8.5pt;">Ruko, Jl. Bumi Sentosa Raya No.7, Nanggewer Mekar, Kec. Cibinong, Kabupaten Bogor, Jawa Barat 16912</p>
+                <p style="margin: 0; font-size: 8.5pt;">Telp/WA: 0895-6000-70007</p>
+              </td>
+              <td style="text-align: right; vertical-align: top; width: 40%;">
+                <h3 style="margin: 0; font-size: 14pt; text-transform: uppercase;">INVOICE SERVICE</h3>
+                <p style="margin: 3px 0 0 0; font-size: 10pt; font-weight: bold;">No. SPK: ${item.id}</p>
+                <p style="margin: 0; font-size: 8.5pt;">Tanggal: ${new Date().toLocaleDateString('id-ID')}</p>
+                <div style="margin-top: 5px; display: inline-block; border: 1px solid #000; padding: 2px 8px; font-size: 8pt; font-weight: bold; text-transform: uppercase; background: #f0f0f0;">LUNAS / SELESAI</div>
+              </td>
+            </tr>
+          </table>
+
+          <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 15px; font-size: 8.5pt;">
+            <tr>
+              <td style="padding: 8px; width: 50%; vertical-align: top; border-right: 1px solid #000;">
+                <strong>DITUJUKAN KEPADA:</strong><br>
+                <span style="font-size: 9.5pt; font-weight: bold;">${item.name || '-'}</span><br>
+                No. HP/WA: ${item.phone || '-'}<br>
+                Metode Penerimaan: <strong>${statusPengirimanTxt}</strong>
+              </td>
+              <td style="padding: 8px; width: 50%; vertical-align: top;">
+                <strong>DETAIL PERANGKAT:</strong><br>
+                Unit: <strong>${item.type || 'Kamera'} - ${item.model || '-'}</strong><br>
+                S/N: <strong>${item.sn || '-'}</strong><br>
+                Teknisi: <strong>${item.teknisiName || 'Adib'}</strong><br>
+                Kelengkapan: ${item.kelengkapan || 'Unit Only'}<br>
+                Waktu Drop: ${item.createdAt || '-'}
+              </td>
+            </tr>
+          </table>
+
+          <div style="font-size: 9.5pt; font-weight: bold; margin-bottom: 6px; text-transform: uppercase;">RINCIAN BIAYA & PERBAIKAN</div>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 9pt; border: 1px solid #000;">
+            <thead>
+              <tr style="background: #f0f0f0; border-bottom: 1px solid #000;">
+                <th style="padding: 8px; text-align: left; border-right: 1px solid #000;">Deskripsi Pekerjaan / Sparepart</th>
+                <th style="padding: 8px; text-align: center; width: 12%; border-right: 1px solid #000;">Qty</th>
+                <th style="padding: 8px; text-align: right; width: 25%;">Total Biaya</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding: 8px; border-right: 1px solid #000;">${item.rincianBiaya || 'Jasa Service & Kalibrasi Unit'}</td>
+                <td style="padding: 8px; text-align: center; border-right: 1px solid #000;">1</td>
+                <td style="padding: 8px; text-align: right;">Rp ${biayaAkhirNum.toLocaleString('id-ID')}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <table style="width: 50%; float: right; border-collapse: collapse; margin-bottom: 15px; font-size: 9.5pt;">
+            <tr style="border: 2px solid #000; background: #f0f0f0;">
+              <td style="padding: 8px; font-weight: bold;">TOTAL PEMBAYARAN:</td>
+              <td style="padding: 8px; font-weight: bold; text-align: right; font-size: 11pt;">Rp ${biayaAkhirNum.toLocaleString('id-ID')}</td>
+            </tr>
+          </table>
+          <div style="clear: both;"></div>
+
+          <div style="border: 1px solid #000; padding: 8px 10px; font-size: 8.5pt; margin-top: 10px; background: #fafafa;">
+            <strong>INFORMASI REKENING PEMBAYARAN (TRANSFER):</strong><br>
+            Bank BRI: <strong>720001006926530</strong> a/n <strong>Muhamad Fauzi</strong><br><br>
+            <strong>Catatan Garansi & Pembayaran:</strong><br>
+            ${catGaransi}<br>
+            • Harap simpan invoice ini sebagai bukti garansi resmi perbaikan.
+          </div>
+
+          <table style="width: 100%; margin-top: 30px; border-collapse: collapse; font-size: 9pt;">
+            <tr>
+              <td style="width: 50%; text-align: center; vertical-align: top;">
+                <p style="margin: 0;">Hormat Kami,</p>
+                <div style="height: 40px;"></div>
+                <p style="margin: 0; font-weight: bold; text-decoration: underline;">Teknisi / Admin Toko</p>
+              </td>
+              <td style="width: 50%; text-align: center; vertical-align: top;">
+                <p style="margin: 0;">Penerima Barang / Pelanggan,</p>
+                <div style="height: 40px;"></div>
+                <p style="margin: 0; font-weight: bold; text-decoration: underline;">(${item.name || 'Pelanggan'})</p>
+              </td>
+            </tr>
+          </table>
+        </div>
+      `;
+      window.print();
+      setTimeout(() => { document.title = oldTitle; }, 1000);
+    }
+  </script>
+</body>
+</html>

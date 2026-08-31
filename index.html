@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lacak Service - Service Kamera Bogor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 5px rgba(245, 158, 11, 0.4); }
+      50% { box-shadow: 0 0 15px rgba(245, 158, 11, 0.8); }
+    }
+    .active-glow {
+      animation: pulseGlow 2s infinite ease-in-out;
+    }
+
+    #printAreaInvoice {
+      display: none;
+    }
+
+    /* Set Cetak Browser Presisi 1 Halaman */
+    @media print {
+      body * {
+        visibility: hidden !important;
+      }
+      #printAreaInvoice, #printAreaInvoice * {
+        visibility: visible !important;
+      }
+      #printAreaInvoice {
+        display: block !important;
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+      }
+      @page {
+        size: A4 portrait;
+        margin: 10mm;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col items-center p-4">
+
+  <div class="w-full max-w-lg bg-white rounded-2xl shadow-lg p-6 my-4 border border-slate-200 space-y-6">
+    
+    <!-- Header Customer -->
+    <div class="text-center border-b border-slate-200 pb-4">
+      <h1 class="text-2xl font-black text-slate-900 tracking-tight">SERVICE KAMERA BOGOR</h1>
+      <p class="text-xs text-slate-500 mt-1 font-medium">Cek Status & Progress Perangkat Anda</p>
+    </div>
+
+    <!-- Kotak Pencarian SPK -->
+    <div class="space-y-2">
+      <label class="block text-xs font-bold text-slate-700">Masukkan Nomor SPK Anda:</label>
+      <div class="flex gap-2">
+        <input type="text" id="searchSpkInput" placeholder="Contoh: SPK-001" class="flex-1 p-3 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-200 uppercase tracking-wider font-bold transition">
+        <button id="searchBtn" onclick="searchSPK()" class="bg-amber-400 hover:bg-amber-500 text-slate-950 font-extrabold px-6 py-3 rounded-xl text-sm transition shadow-sm flex items-center justify-center min-w-[90px]">
+          <span id="btnText">Cari</span>
+          <svg id="btnLoader" class="hidden animate-spin h-4 w-4 text-slate-950" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Area Hasil Tracking -->
+    <div id="resultContainer" class="hidden space-y-5 pt-2 transition-all duration-300 opacity-0 transform translate-y-2">
+      
+      <!-- Info Utama Pelanggan & Unit -->
+      <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3 shadow-sm">
+        <div class="flex justify-between items-start">
+          <div>
+            <span class="text-xs font-black text-slate-900 bg-amber-300 px-2.5 py-1 rounded-lg border border-amber-400" id="resId">SPK-000</span>
+            <h3 class="font-black text-base text-slate-900 mt-2" id="resModel">Kamera / Lensa</h3>
+          </div>
+          <span id="resStatusBadge" class="text-xs px-3 py-1 rounded-full font-bold border">Diterima</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-200">
+          <div>
+            <span class="text-slate-500 font-medium">Pemilik:</span>
+            <p class="font-bold text-slate-800" id="resName">-</p>
+          </div>
+          <div>
+            <span class="text-slate-500 font-medium">Waktu Masuk:</span>
+            <p class="font-bold text-slate-800" id="resDrop">-</p>
+          </div>
+          <div>
+            <span class="text-slate-500 font-medium">Serial Number (S/N):</span>
+            <p class="font-mono text-slate-900 font-bold bg-amber-100 px-1.5 py-0.5 rounded w-fit" id="resSN">-</p>
+          </div>
+          <div>
+            <span class="text-slate-500 font-medium">Kelengkapan:</span>
+            <p class="font-bold text-slate-800" id="resKelengkapan">-</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detail Fisik & Keluhan -->
+      <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2 text-xs shadow-sm">
+        <p class="text-slate-700"><span class="text-slate-500 font-semibold">Kondisi Fisik Awal:</span> <span id="resKondisi" class="text-slate-900 font-medium">-</span></p>
+        <p class="text-slate-700"><span class="text-slate-500 font-semibold">Keluhan / Kerusakan:</span> <span id="resIssue" class="text-rose-600 font-bold">-</span></p>
+        <p class="text-slate-700"><span class="text-slate-500 font-semibold">Estimasi Biaya:</span> <span id="resEstimasi" class="text-slate-900 font-extrabold">-</span></p>
+        <p class="text-slate-700"><span class="text-slate-500 font-semibold">Estimasi Selesai:</span> <span id="resTargetDate" class="text-emerald-700 font-extrabold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">-</span></p>
+      </div>
+
+      <!-- Tombol Download / Cetak Dokumen -->
+      <div id="actionButtonContainer" class="pt-1"></div>
+
+      <!-- Indikator Progress Berjalan -->
+      <div class="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+          <span>⚡ Timeline Pengerjaan</span>
+        </h4>
+        <div id="timelineStepsContainer" class="space-y-0"></div>
+      </div>
+
+      <!-- Informasi Pembayaran & Rincian -->
+      <div id="paymentSection" class="hidden space-y-4">
+        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2 text-xs shadow-sm">
+          <div class="flex justify-between items-center">
+            <span class="text-slate-500 font-semibold">Status Pembayaran:</span>
+            <span id="resPaymentStatus" class="font-bold px-2 py-0.5 rounded text-[10px]">-</span>
+          </div>
+          <div class="flex justify-between items-center" id="rincianRow">
+            <span class="text-slate-500 font-semibold">Rincian Pekerjaan:</span>
+            <span id="resRincian" class="font-medium text-slate-800 text-right">-</span>
+          </div>
+          <div class="flex justify-between items-center pt-2 border-t border-slate-200">
+            <span class="text-slate-900 font-bold">Total Biaya Akhir:</span>
+            <span id="resTotalBiaya" class="text-slate-950 font-black text-base bg-amber-300 px-2 py-0.5 rounded border border-amber-400">-</span>
+          </div>
+        </div>
+
+        <div class="bg-amber-50 border border-amber-300 p-4 rounded-2xl text-xs space-y-1 text-slate-800 shadow-sm">
+          <p class="font-extrabold text-amber-950">💳 Rekening Resmi Pembayaran:</p>
+          <p>Bank BRI: <strong class="text-slate-950 font-black">720001006926530</strong></p>
+          <p>a/n <strong class="text-slate-950 font-black">Muhamad Fauzi</strong></p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Pesan Error -->
+    <div id="errorContainer" class="hidden text-center py-4 text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-xl font-bold">
+      Nomor SPK tidak ditemukan. Periksa kembali nomor SPK Anda.
+    </div>
+
+  </div>
+
+  <!-- Copyright Footer -->
+  <div class="mt-2 mb-4 text-[10px] text-slate-400 text-center font-medium leading-relaxed">
+    Copyright by Kevin Eleazar Chandra©<br>Beta Test V1.0
+  </div>
+
+  <!-- Container Area Cetak SPK / Invoice -->
+  <div id="printAreaInvoice"></div>
+
+  <script>
+    const SHEET_URL = "https://script.google.com/macros/s/AKfycbyp0zx4Thgz1nh4r7OQAwUpE1izZ6gN3hdU85lMSk1vkW9EuKBBRmbGceKt4229e6yZ/exec";
+    const STAGES = ["Diterima", "Diagnosa", "Pengerjaan", "Selesai"];
+    let currentItemData = null;
+    let logoData = localStorage.getItem('companyLogo') || '';
+
+    function parseNumeric(val) {
+      if (!val) return 0;
+      if (typeof val === 'number') return isNaN(val) ? 0 : val;
+      const str = String(val).trim();
+      if (str.includes('T') || str.includes('Z') || str.includes(':') || str.includes('/') || str.length > 9) return 0;
+      const cleaned = str.replace(/[^0-9]/g, '');
+      const parsed = parseInt(cleaned, 10);
+      return isNaN(parsed) ? 0 : parsed;
+    }
+
+    function parseTargetDate(dateStr) {
+      if (!dateStr || dateStr === '-') return null;
+      let d = new Date(dateStr);
+      if (!isNaN(d.getTime())) return d;
+
+      const str = String(dateStr).trim();
+      if (str.includes('/')) {
+        const parts = str.split(',');
+        const dateParts = parts[0].trim().split('/');
+        if (dateParts.length === 3) {
+          const day = parseInt(dateParts[0], 10);
+          const month = parseInt(dateParts[1], 10) - 1;
+          const year = parseInt(dateParts[2], 10);
+          let timeStr = parts[1] ? parts[1].trim().replace('.', ':') : '00:00';
+          const timeParts = timeStr.split(':');
+          
+          d = new Date(year, month, day, parseInt(timeParts[0] || 0, 10), parseInt(timeParts[1] || 0, 10));
+          if (!isNaN(d.getTime())) return d;
+        }
+      }
+      return null;
+    }
+
+    function formatDisplayDate(dateStr) {
+      const d = parseTargetDate(dateStr);
+      if (!d) return '-';
+      return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ', ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function checkIsPaid(item) {
+      if (!item) return false;
+      const payVal = String(
+        item.paymentStatus || 
+        item.pembayaran || 
+        item['status pembayaran'] || 
+        item.statusBayar || 
+        item.status_pembayaran || 
+        ''
+      ).trim().toLowerCase();
+      return payVal === 'lunas';
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const spkParam = urlParams.get('spk');
+      if (spkParam) {
+        document.getElementById('searchSpkInput').value = spkParam;
+        searchSPK();
+      }
+    });
+
+    async function searchSPK() {
+      const queryId = document.getElementById('searchSpkInput').value.trim().toUpperCase();
+      const resContainer = document.getElementById('resultContainer');
+      const errContainer = document.getElementById('errorContainer');
+      const searchBtn = document.getElementById('searchBtn');
+      const btnText = document.getElementById('btnText');
+      const btnLoader = document.getElementById('btnLoader');
+
+      if (!queryId) return;
+
+      resContainer.classList.add('hidden', 'opacity-0', 'translate-y-3');
+      errContainer.classList.add('hidden');
+      searchBtn.disabled = true;
+      btnText.classList.add('hidden');
+      btnLoader.classList.remove('hidden');
+
+      try {
+        const response = await fetch(SHEET_URL);
+        const data = await response.json();
+
+        if (Array.isArray(data)) {
+          const item = data.find(d => String(d.id || d['no spk'] || '').trim().toUpperCase() === queryId);
+
+          if (item) {
+            currentItemData = item;
+            displayResult(item);
+            resContainer.classList.remove('hidden');
+            setTimeout(() => {
+              resContainer.classList.remove('opacity-0', 'translate-y-3');
+            }, 50);
+          } else {
+            errContainer.classList.remove('hidden');
+          }
+        }
+      } catch (err) {
+        console.error("Gagal mengambil data:", err);
+        errContainer.innerText = "Gagal terhubung ke database. Pastikan koneksi internet aktif.";
+        errContainer.classList.remove('hidden');
+      } finally {
+        searchBtn.disabled = false;
+        btnText.classList.remove('hidden');
+        btnLoader.classList.add('hidden');
+      }
+    }
+
+    function displayResult(item) {
+      document.getElementById('resId').innerText = item.id || '-';
+      document.getElementById('resModel').innerText = `${item.type || 'Kamera'} - ${item.model || '-'}`;
+      document.getElementById('resName').innerText = item.name || '-';
+      document.getElementById('resDrop').innerText = item.createdAt || '-';
+      document.getElementById('resSN').innerText = item.sn || '-';
+      document.getElementById('resKelengkapan').innerText = item.kelengkapan || 'Unit Only';
+      document.getElementById('resKondisi').innerText = item.kondisi || '-';
+      document.getElementById('resIssue').innerText = item.issue || '-';
+      document.getElementById('resEstimasi').innerText = item.estimasiBiaya || 'Menunggu Diagnosa';
+      
+      document.getElementById('resTargetDate').innerText = formatDisplayDate(item.targetDate);
+
+      const statusBadge = document.getElementById('resStatusBadge');
+      const currentStatus = String(item.status || 'Diterima').trim();
+      statusBadge.innerText = currentStatus;
+      
+      const paymentSection = document.getElementById('paymentSection');
+      const actionBtnContainer = document.getElementById('actionButtonContainer');
+
+      if (currentStatus === 'Selesai') {
+        statusBadge.className = "text-xs px-3 py-1 rounded-full font-extrabold border bg-emerald-100 text-emerald-800 border-emerald-300";
+        paymentSection.classList.remove('hidden');
+        actionBtnContainer.innerHTML = `
+          <button onclick="printInvoiceResmi()" class="w-full bg-slate-900 hover:bg-slate-800 text-amber-400 font-extrabold py-3 px-4 rounded-xl text-xs flex items-center justify-center gap-2 transition shadow-md">
+            📥 Cetak / Download Invoice Resmi (PDF)
+          </button>
+        `;
+      } else {
+        statusBadge.className = "text-xs px-3 py-1 rounded-full font-bold border bg-amber-100 text-amber-900 border-amber-300";
+        paymentSection.classList.add('hidden');
+        actionBtnContainer.innerHTML = `
+          <button onclick="printSPKResmi()" class="w-full bg-amber-400 hover:bg-amber-500 text-slate-950 font-extrabold py-3 px-4 rounded-xl text-xs flex items-center justify-center gap-2 transition shadow-sm">
+            📄 Cetak / Download Bukti SPK Service (PDF)
+          </button>
+        `;
+      }
+
+      const isPaid = checkIsPaid(item);
+      const payStatusEl = document.getElementById('resPaymentStatus');
+      payStatusEl.innerText = isPaid ? "✅ LUNAS" : "🔴 BELUM LUNAS";
+      payStatusEl.className = isPaid ? "font-extrabold px-2.5 py-0.5 rounded text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-300" : "font-extrabold px-2.5 py-0.5 rounded text-[10px] bg-rose-100 text-rose-800 border border-rose-300";
+
+      const rincianRow = document.getElementById('rincianRow');
+      const rincianText = String(item.rincianBiaya || '').trim();
+      if (rincianText && !rincianText.includes('T')) {
+        document.getElementById('resRincian').innerText = rincianText;
+        rincianRow.style.display = 'flex';
+      } else {
+        rincianRow.style.display = 'none';
+      }
+
+      const biayaNum = parseNumeric(item.biaya);
+      document.getElementById('resTotalBiaya').innerText = biayaNum > 0 ? `Rp ${biayaNum.toLocaleString('id-ID')}` : '-';
+
+      const container = document.getElementById('timelineStepsContainer');
+      container.innerHTML = '';
+      
+      let currentIndex = STAGES.findIndex(s => s.toLowerCase() === currentStatus.toLowerCase());
+      if (currentIndex === -1) currentIndex = 0;
+
+      const adminNotes = String(item.notes || '').trim();
+
+      STAGES.forEach((stage, idx) => {
+        const isPassed = idx < currentIndex;
+        const isCurrent = idx === currentIndex;
+        const isLast = idx === STAGES.length - 1;
+
+        let dotHtml = '';
+        let titleClass = '';
+        let descClass = '';
+        let lineColor = "bg-slate-200";
+
+        if (idx < currentIndex) {
+          lineColor = "bg-amber-400";
+        }
+
+        if (isCurrent) {
+          dotHtml = `
+            <div class="relative flex items-center justify-center w-4 h-4">
+              <span class="animate-ping absolute inline-flex h-5 w-5 rounded-full bg-amber-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-amber-400 ring-4 ring-amber-200 active-glow"></span>
+            </div>
+          `;
+          titleClass = "text-slate-950 font-black text-sm tracking-wide";
+          descClass = "text-slate-800 font-medium";
+        } else if (isPassed) {
+          dotHtml = `
+            <div class="relative flex items-center justify-center w-3.5 h-3.5 rounded-full bg-amber-400">
+              <svg class="w-2.5 h-2.5 text-slate-950 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+          `;
+          titleClass = "text-slate-700 font-bold text-xs";
+          descClass = "text-slate-500";
+        } else {
+          dotHtml = `
+            <div class="relative flex items-center justify-center w-3.5 h-3.5 rounded-full bg-slate-200 border border-slate-300"></div>
+          `;
+          titleClass = "text-slate-400 font-medium text-xs";
+          descClass = "text-slate-400";
+        }
+
+        let descText = "Menunggu antrean";
+        if (stage === 'Diterima') {
+          descText = (isCurrent && adminNotes && !adminNotes.includes('T')) ? adminNotes : (item.notes || "Unit diterima di store.");
+        } else if (stage === 'Diagnosa') {
+          descText = isCurrent && adminNotes && !adminNotes.includes('T') ? adminNotes : "Pengecekan teknisi & konfirmasi kerusakan.";
+        } else if (stage === 'Pengerjaan') {
+          descText = isCurrent && adminNotes && !adminNotes.includes('T') ? adminNotes : "Proses perbaikan / penggantian sparepart.";
+        } else if (stage === 'Selesai') {
+          descText = isCurrent && adminNotes && !adminNotes.includes('T') ? adminNotes : "Unit sudah selesai dan siap diambil/dikirim.";
+        }
+
+        const wrapper = document.createElement('div');
+        wrapper.className = "flex gap-4 relative";
+        wrapper.innerHTML = `
+          <div class="flex flex-col items-center">
+            ${dotHtml}
+            ${!isLast ? `<div class="w-0.5 h-10 ${lineColor} transition-all duration-300 my-1"></div>` : '<div class="h-4"></div>'}
+          </div>
+          <div class="pb-5">
+            <p class="${titleClass}">${stage}</p>
+            <p class="text-[11px] ${descClass} mt-0.5">${descText}</p>
+          </div>
+        `;
+        container.appendChild(wrapper);
+      });
+    }
+
+    function printSPKResmi() {
+      if (!currentItemData) return;
+      const todayStr = new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'numeric', year: 'numeric'});
+
+      const logoHtml = logoData ? `<img src="${logoData}" style="max-height: 50px; max-width: 150px; object-fit: contain; margin-bottom: 4px;">` : `<div style="background: #FACC15; color: #000; padding: 4px 8px; font-weight: bold; font-size: 11px; display: inline-block; margin-bottom: 6px;">SERVICE KAMERA BOGOR</div>`;
+
+      let metodePrintText = "Datang Langsung ke Store";
+      const delType = String(currentItemData.deliveryType || currentItemData.delivery || '').trim();
+      if (delType === 'Ekspedisi') {
+        metodePrintText = "Kiriman Ekspedisi / Kurir";
+      } else if (delType === 'Pedagang_Store') {
+        metodePrintText = "Mitra / Pedagang (Datang ke Store)";
+      } else if (delType === 'Pedagang_Ekspedisi') {
+        metodePrintText = "Mitra / Pedagang (Kiriman Ekspedisi)";
+      }
+
+      const printArea = document.getElementById('printAreaInvoice');
+      printArea.innerHTML = `
+        <div style="padding: 10px; font-family: Arial, sans-serif; color: #000; background: #ffffff; width: 100%; box-sizing: border-box; font-size: 12px;">
+          
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 10px;">
+            <div>
+              ${logoHtml}
+              <h3 style="margin: 0; font-size: 15px; font-weight: bold;">SERVICE KAMERA BOGOR</h3>
+              <p style="margin: 2px 0 0; font-size: 9px; color: #333; line-height: 1.2;">
+                Ruko, Jl. Bumi Sentosa Raya No.7, Nanggewer Mekar, Kec. Cibinong, Kabupaten Bogor, Jawa Barat 16912<br>
+                Telp/WA: 0895-6000-70007
+              </p>
+            </div>
+            <div style="text-align: right;">
+              <h2 style="margin: 0; font-size: 15px; font-weight: bold;">SURAT PERINTAH KERJA (SPK)</h2>
+              <p style="margin: 2px 0 0; font-size: 10px;"><strong>No. SPK:</strong> ${currentItemData.id || '-'}</p>
+              <p style="margin: 2px 0 0; font-size: 10px;"><strong>Tanggal:</strong> ${currentItemData.createdAt ? currentItemData.createdAt.split(',')[0] : todayStr}</p>
+              <div style="margin-top: 4px; display: inline-block; border: 1px solid #000; padding: 2px 6px; font-size: 9px; font-weight: bold;">BUKTI TANDA TERIMA</div>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; border: 1px solid #000; padding: 8px; margin-bottom: 10px;">
+            <div style="width: 48%;">
+              <p style="margin: 0 0 3px; font-size: 9.5px; font-weight: bold; color: #555;">DITUJUKAN KEPADA:</p>
+              <p style="margin: 0 0 2px; font-size: 11.5px; font-weight: bold;">${currentItemData.name || '-'}</p>
+              <p style="margin: 0; font-size: 9.5px;">Metode Penerimaan: <strong>${metodePrintText}</strong></p>
+            </div>
+            <div style="width: 48%; border-left: 1px solid #ccc; padding-left: 8px;">
+              <p style="margin: 0 0 3px; font-size: 9.5px; font-weight: bold; color: #555;">DETAIL PERANGKAT:</p>
+              <p style="margin: 0 0 2px; font-size: 9.5px;">Unit: ${currentItemData.type || 'Kamera'} - ${currentItemData.model || '-'}</p>
+              <p style="margin: 0 0 2px; font-size: 9.5px;">S/N: ${currentItemData.sn || '-'}</p>
+              <p style="margin: 0 0 2px; font-size: 9.5px;">Kelengkapan: ${currentItemData.kelengkapan || 'Unit Only'}</p>
+              <p style="margin: 0; font-size: 9.5px;">Waktu Masuk: ${currentItemData.createdAt || '-'}</p>
+            </div>
+          </div>
+
+          <p style="margin: 0 0 4px; font-size: 10.5px; font-weight: bold;">INFORMASI KONDISI & KELUHAN</p>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 10.5px; border: 1px solid #000;">
+            <tbody>
+              <tr style="border-bottom: 1px solid #000;">
+                <td style="padding: 6px; width: 30%; font-weight: bold; background: #f9f9f9; border-right: 1px solid #000;">Kondisi Fisik Awal</td>
+                <td style="padding: 6px;">${currentItemData.kondisi || '-'}</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #000;">
+                <td style="padding: 6px; font-weight: bold; background: #f9f9f9; border-right: 1px solid #000;">Keluhan / Kerusakan</td>
+                <td style="padding: 6px; font-weight: bold; color: #cc0000;">${currentItemData.issue || '-'}</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #000;">
+                <td style="padding: 6px; font-weight: bold; background: #f9f9f9; border-right: 1px solid #000;">Estimasi Biaya Pengerjaan</td>
+                <td style="padding: 6px; font-weight: bold;">${currentItemData.estimasiBiaya || 'Menunggu Diagnosa'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px; font-weight: bold; background: #f9f9f9; border-right: 1px solid #000;">Target Estimasi Selesai</td>
+                <td style="padding: 6px; font-weight: bold;">${formatDisplayDate(currentItemData.targetDate)}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style="border: 1px solid #000; padding: 6px 8px; font-size: 7.5pt; margin-top: 10px;">
+            <strong>Syarat & Ketentuan Service:</strong>
+            <ul style="margin: 2px 0 0 0; padding-left: 14px; list-style-type: disc; line-height: 1.3;">
+              <li style="margin-bottom: 3px; padding-left: 4px;">SPK ini berlaku sebagai tanda terima unit dan harus disertakan kembali pada waktu pengambilan unit.</li>
+              <li style="margin-bottom: 3px; padding-left: 4px;">Konfirmasi service akan dikirimkan ke pelanggan apabila diperlukan penggantian spare part. Bila tidak ada spare part yang perlu diganti kami akan melakukan servis sesuai biaya estimasi di awal.</li>
+              <li style="margin-bottom: 3px; padding-left: 4px;">Apabila permohonan konfirmasi servis tidak ditanggapi selama 1 minggu kalender, maka servis dianggap batal.</li>
+              <li style="margin-bottom: 3px; padding-left: 4px;">Garansi servis berlaku 30 hari kalender untuk kerusakan yang sama dan bukan disebabkan oleh salah pemakaian atau bencana alam.</li>
+              <li style="margin-bottom: 0; padding-left: 4px;">Apabila unit selesai tidak diambil lebih dari 3 (tiga) bulan kalender sejak tanggal diterima, maka kami berhak melakukan daur ulang (recycle), unit tidak dapat diambil kembali oleh pelanggan, serta tidak ada tuntutan ganti rugi atau tanggung jawab apapun di kemudian hari kepada Service Kamera Bogor.</li>
+            </ul>
+          </div>
+
+          <table style="width: 100%; margin-top: 15px; font-size: 10px; text-align: center;">
+            <tr>
+              <td style="width: 50%;">
+                <p style="margin: 0;">Penerima Barang / Pelanggan,</p>
+                <br><br><br>
+                <p style="margin: 0; font-weight: bold;">(${currentItemData.name || 'Pelanggan'})</p>
+              </td>
+              <td style="width: 50%;">
+                <p style="margin: 0;">Hormat Kami,</p>
+                <br><br><br>
+                <p style="margin: 0; font-weight: bold;">Teknisi / Admin Toko</p>
+              </td>
+            </tr>
+          </table>
+
+        </div>
+      `;
+
+      window.print();
+    }
+
+    function printInvoiceResmi() {
+      if (!currentItemData) return;
+      const biayaNum = parseNumeric(currentItemData.biaya);
+      const todayStr = new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'numeric', year: 'numeric'});
+
+      const logoHtml = logoData ? `<img src="${logoData}" style="max-height: 50px; max-width: 150px; object-fit: contain; margin-bottom: 4px;">` : `<div style="background: #FACC15; color: #000; padding: 4px 8px; font-weight: bold; font-size: 11px; display: inline-block; margin-bottom: 6px;">SERVICE KAMERA BOGOR</div>`;
+
+      const isPaid = checkIsPaid(currentItemData);
+      const statusInvoiceText = isPaid ? 'LUNAS' : 'BELUM LUNAS';
+
+      let metodePrintText = "Datang Langsung ke Store";
+      const delType = String(currentItemData.deliveryType || currentItemData.delivery || '').trim();
+      if (delType === 'Ekspedisi') {
+        metodePrintText = "Kiriman Ekspedisi / Kurir";
+      } else if (delType === 'Pedagang_Store') {
+        metodePrintText = "Mitra / Pedagang (Datang ke Store)";
+      } else if (delType === 'Pedagang_Ekspedisi') {
+        metodePrintText = "Mitra / Pedagang (Kiriman Ekspedisi)";
+      }
+
+      const printArea = document.getElementById('printAreaInvoice');
+      printArea.innerHTML = `
+        <div style="padding: 10px; font-family: Arial, sans-serif; color: #000; background: #ffffff; width: 100%; box-sizing: border-box; font-size: 12px;">
+          
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 10px;">
+            <div>
+              ${logoHtml}
+              <h3 style="margin: 0; font-size: 15px; font-weight: bold;">SERVICE KAMERA BOGOR</h3>
+              <p style="margin: 2px 0 0; font-size: 9px; color: #333; line-height: 1.2;">
+                Ruko, Jl. Bumi Sentosa Raya No.7, Nanggewer Mekar, Kec. Cibinong, Kabupaten Bogor, Jawa Barat 16912<br>
+                Telp/WA: 0895-6000-70007
+              </p>
+            </div>
+            <div style="text-align: right;">
+              <h2 style="margin: 0; font-size: 15px; font-weight: bold;">INVOICE SERVICE</h2>
+              <p style="margin: 2px 0 0; font-size: 10px;"><strong>No. SPK:</strong> ${currentItemData.id || '-'}</p>
+              <p style="margin: 2px 0 0; font-size: 10px;"><strong>Tanggal:</strong> ${currentItemData.createdAt ? currentItemData.createdAt.split(',')[0] : todayStr}</p>
+              <div style="margin-top: 4px; display: inline-block; border: 1px solid #000; padding: 2px 6px; font-size: 9px; font-weight: bold;">${statusInvoiceText}</div>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; border: 1px solid #000; padding: 8px; margin-bottom: 10px;">
+            <div style="width: 48%;">
+              <p style="margin: 0 0 3px; font-size: 9.5px; font-weight: bold; color: #555;">DITUJUKAN KEPADA:</p>
+              <p style="margin: 0 0 2px; font-size: 11.5px; font-weight: bold;">${currentItemData.name || '-'}</p>
+              <p style="margin: 0; font-size: 9.5px;">Metode Penerimaan: <strong>${metodePrintText}</strong></p>
+            </div>
+            <div style="width: 48%; border-left: 1px solid #ccc; padding-left: 8px;">
+              <p style="margin: 0 0 3px; font-size: 9.5px; font-weight: bold; color: #555;">DETAIL PERANGKAT:</p>
+              <p style="margin: 0 0 2px; font-size: 9.5px;">Unit: ${currentItemData.type || 'Kamera'} - ${currentItemData.model || '-'}</p>
+              <p style="margin: 0 0 2px; font-size: 9.5px;">S/N: ${currentItemData.sn || '-'}</p>
+              <p style="margin: 0 0 2px; font-size: 9.5px;">Kelengkapan: ${currentItemData.kelengkapan || 'Unit Only'}</p>
+              <p style="margin: 0; font-size: 9.5px;">Waktu Masuk: ${currentItemData.createdAt || '-'}</p>
+            </div>
+          </div>
+
+          <p style="margin: 0 0 4px; font-size: 10.5px; font-weight: bold;">RINCIAN BIAYA & PERBAIKAN</p>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 10.5px;">
+            <thead>
+              <tr style="border-bottom: 1.5px solid #000; border-top: 1.5px solid #000; text-align: left;">
+                <th style="padding: 5px; width: 65%;">Deskripsi Pekerjaan / Sparepart</th>
+                <th style="padding: 5px; width: 10%; text-align: center;">Qty</th>
+                <th style="padding: 5px; width: 25%; text-align: right;">Total Biaya</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 5px;">${currentItemData.rincianBiaya || currentItemData.issue || 'Perbaikan & Maintenance'}</td>
+                <td style="padding: 5px; text-align: center;">1</td>
+                <td style="padding: 5px; text-align: right;">Rp ${biayaNum.toLocaleString('id-ID')}</td>
+              </tr>
+              <tr style="border-top: 1.5px solid #000; font-weight: bold;">
+                <td colspan="2" style="padding: 6px; text-align: right;">TOTAL PEMBAYARAN:</td>
+                <td style="padding: 6px; text-align: right; font-size: 12px;">Rp ${biayaNum.toLocaleString('id-ID')}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style="border: 1px solid #000; padding: 8px; margin-bottom: 10px; font-size: 9px;">
+            <p style="margin: 0 0 3px; font-weight: bold;">INFORMASI REKENING PEMBAYARAN (TRANSFER):</p>
+            <p style="margin: 0 0 5px;">Bank BRI: <strong>720001006926530</strong> a/n <strong>Muhamad Fauzi</strong></p>
+            <p style="margin: 0 0 2px; font-weight: bold;">Catatan Garansi & Pembayaran:</p>
+            <ul style="margin: 0; padding-left: 14px; color: #222;">
+              <li>Unit telah diuji coba dan berfungsi normal.</li>
+              <li>Garansi service berlaku selama 30 hari untuk jenis kerusakan yang sama.</li>
+              <li>Harap simpan invoice ini sebagai bukti garansi resmi perbaikan.</li>
+            </ul>
+          </div>
+
+          <table style="width: 100%; margin-top: 15px; font-size: 10px; text-align: center;">
+            <tr>
+              <td style="width: 50%;">
+                <p style="margin: 0;">Hormat Kami,</p>
+                <br><br><br>
+                <p style="margin: 0; font-weight: bold;">Teknisi / Admin Toko</p>
+              </td>
+              <td style="width: 50%;">
+                <p style="margin: 0;">Penerima Barang / Pelanggan,</p>
+                <br><br><br>
+                <p style="margin: 0; font-weight: bold;">(${currentItemData.name || 'Pelanggan'})</p>
+              </td>
+            </tr>
+          </table>
+
+        </div>
+      `;
+
+      window.print();
+    }
+  </script>
+</body>
+</html>

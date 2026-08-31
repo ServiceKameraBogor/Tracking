@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Service Kamera Bogor - Portal Teknisi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Library Scan Barcode & QR Code -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col items-center p-4">
+
+  <div class="w-full max-w-md bg-white rounded-2xl shadow-lg p-5 border border-slate-200 space-y-4">
+    
+    <!-- Header & Pilihan Teknisi -->
+    <div class="border-b border-slate-200 pb-3 space-y-2">
+      <div class="flex justify-between items-center">
+        <div>
+          <h1 class="text-xl font-black text-slate-900 tracking-tight">SERVICE KAMERA BOGOR</h1>
+          <p class="text-xs text-slate-500 font-bold tracking-wider mt-0.5">PORTAL TEKNISI</p>
+        </div>
+        
+        <!-- Dropdown Pilih Teknisi -->
+        <select id="techSelect" onchange="changeTechnician()" class="bg-amber-300 border border-amber-400 text-slate-950 font-black text-xs p-2 rounded-xl outline-none focus:ring-2 focus:ring-amber-400 transition cursor-pointer shadow-sm">
+          <option value="Adib">👨‍🔧 Teknisi Adib</option>
+          <option value="Oky">👨‍🔧 Teknisi Oky</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Summary Box: Selesai Hari Ini & Bulan Ini + Tombol Reset (2x Klik) -->
+    <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl space-y-2.5 shadow-sm">
+      <div class="flex justify-between items-center border-b border-slate-200 pb-2">
+        <span class="text-xs font-bold text-slate-800 flex items-center gap-1">
+          📊 Statistik (<span id="techNameSummary">Adib</span>):
+        </span>
+        
+        <button id="btnResetDaily" onclick="handleResetClick()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 hover:text-rose-700 border border-slate-300 text-[10px] px-2 py-0.5 rounded-lg transition font-bold">
+          🧹 Reset
+        </button>
+      </div>
+
+      <!-- Badges Hitungan Hari Ini & Bulan Ini -->
+      <div class="grid grid-cols-2 gap-2 text-center">
+        <div class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm">
+          <span class="text-[10px] text-slate-500 font-semibold block">Selesai Hari Ini</span>
+          <span id="dailyCount" class="text-sm font-black text-slate-900">0 Unit</span>
+        </div>
+        
+        <!-- Kartu Selesai Bulan Ini -->
+        <div onclick="openMonthlyModal()" class="bg-white hover:bg-slate-50 p-2.5 rounded-xl border border-slate-200 hover:border-amber-400 cursor-pointer active:scale-95 transition-all duration-150 shadow-sm group">
+          <span class="text-[10px] text-slate-500 font-semibold block flex items-center justify-center gap-1">
+            <span>Selesai Bulan Ini</span>
+            <span class="text-[9px] group-hover:translate-x-0.5 transition-transform">🔍</span>
+          </span>
+          <span id="monthlyCount" class="text-sm font-black text-slate-900">0 Unit</span>
+        </div>
+      </div>
+      
+      <div id="dailyList" class="text-[11px] text-slate-700 space-y-1 max-h-28 overflow-y-auto pr-1 pt-1">
+        <p class="text-slate-400 italic text-center py-1">Belum ada unit yang diselesaikan hari ini.</p>
+      </div>
+    </div>
+
+    <!-- BOX ANTRIAN MENUNGGU PEKERJAAN (PENDING QUEUE) -->
+    <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl space-y-2.5 shadow-sm">
+      <div class="flex justify-between items-center border-b border-slate-200 pb-2">
+        <h3 class="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
+          <span>⏳ Antrian Pekerjaan</span>
+          <span class="text-slate-500 font-normal">(<span id="queueTechName">Adib</span>)</span>
+        </h3>
+        <span id="queueCountBadge" class="text-[10px] bg-amber-300 text-slate-950 font-black px-2.5 py-0.5 rounded-full border border-amber-400">0 Unit</span>
+      </div>
+
+      <p class="text-[10px] text-slate-500">Klik unit di bawah ini untuk langsung memproses/update progress:</p>
+      
+      <div id="queueListContainer" class="space-y-2 max-h-60 overflow-y-auto pr-1 text-xs">
+        <!-- Render otomatis via JavaScript -->
+      </div>
+    </div>
+
+    <!-- Scanner Box -->
+    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center space-y-3 shadow-sm">
+      <div id="reader" class="w-full overflow-hidden rounded-lg bg-slate-900 min-h-[180px] flex items-center justify-center text-xs text-slate-400">
+        Klik tombol di bawah untuk aktifkan Kamera Scanner
+      </div>
+      
+      <div class="flex gap-2">
+        <button id="btnStartScan" onclick="startScanner()" class="flex-1 bg-amber-400 hover:bg-amber-500 text-slate-950 text-xs font-extrabold py-2.5 rounded-xl transition shadow-sm">
+          📷 Buka Kamera Scan
+        </button>
+        <button id="btnStopScan" onclick="stopScanner()" class="hidden bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold py-2.5 rounded-xl transition shadow-sm">
+          ⏹️ Tutup Kamera
+        </button>
+      </div>
+    </div>
+
+    <!-- Input Manual SPK -->
+    <div class="flex gap-2">
+      <input type="text" id="manualSpkInput" placeholder="Ketik No. SPK (misal: SPK-001)" class="flex-1 p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-200 uppercase font-bold tracking-wider transition">
+      <button onclick="searchManualSPK()" class="bg-slate-900 hover:bg-slate-800 text-amber-400 text-xs font-extrabold px-4 rounded-xl transition shadow-sm">
+        Cari
+      </button>
+    </div>
+
+    <!-- Animasi Loading Searching SPK -->
+    <div id="loading" class="hidden bg-slate-50 border border-amber-300 p-5 rounded-xl text-center space-y-2 shadow-sm">
+      <div class="relative flex justify-center items-center my-1">
+        <div class="w-10 h-10 border-4 border-amber-200 border-t-amber-500 rounded-full animate-spin"></div>
+      </div>
+      <p class="text-xs font-bold text-slate-800 animate-pulse">🔍 Mencari Data SPK...</p>
+    </div>
+
+    <!-- Card Editor Teknisi -->
+    <div id="technicianCard" class="hidden border border-slate-200 bg-slate-50 rounded-2xl p-4 space-y-4 shadow-sm">
+      
+      <!-- Ringkasan Unit -->
+      <div class="border-b border-slate-200 pb-3">
+        <div class="flex justify-between items-start">
+          <span id="tkSpkId" class="text-base font-black text-slate-900 bg-amber-300 px-2.5 py-0.5 rounded-lg border border-amber-400">SPK-000</span>
+          
+          <!-- Indikator Sisa Hari & Delivery Type -->
+          <div class="flex flex-col items-end gap-1">
+            <span id="tkDeadlineBadge"></span>
+            <span id="tkDelivery" class="text-[10px] px-2 py-0.5 rounded bg-slate-200 text-slate-700 border border-slate-300 font-bold">-</span>
+          </div>
+        </div>
+        <h2 id="tkUnit" class="text-sm font-black text-slate-900 mt-2">-</h2>
+        <p id="tkOwner" class="text-xs text-slate-600 font-bold mt-0.5">-</p>
+        <p id="tkKondisi" class="text-xs text-slate-700 font-medium mt-1">Kondisi: -</p>
+        <div class="mt-2 bg-white p-2.5 rounded-xl text-xs text-slate-700 border border-slate-200 shadow-sm">
+          <span class="font-bold text-rose-600">Keluhan Pelanggan:</span>
+          <p id="tkIssue" class="mt-0.5 text-slate-900 font-medium">-</p>
+        </div>
+      </div>
+
+      <!-- Form Update Progress -->
+      <form onsubmit="saveTechnicianUpdate(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-800 mb-1">Status Pekerjaan:</label>
+          <select id="tkStatusSelect" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 font-bold outline-none focus:border-amber-400">
+            <option value="Diterima">📥 Diterima Kasir</option>
+            <option value="Diagnosa">🔍 Diagnosa / Pengecekan</option>
+            <option value="Pengerjaan">🛠️ Dalam Pengerjaan</option>
+            <option value="Selesai">✅ Selesai Dikerjakan</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-800 mb-1">Catatan Progress / Hasil Check:</label>
+          <textarea id="tkNotesInput" rows="3" placeholder="Contoh: Flexible shutter sudah diganti, saat ini proses kalibrasi fokus." class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 outline-none focus:border-amber-400 font-medium"></textarea>
+        </div>
+
+        <!-- Tombol Simpan + Animasi Loading -->
+        <button type="submit" id="btnSaveSubmit" class="w-full bg-amber-400 hover:bg-amber-500 text-slate-950 font-extrabold py-3 rounded-xl text-xs transition shadow-sm flex items-center justify-center gap-2">
+          <span id="txtBtnSave">💾 Simpan Update Progress</span>
+          <div id="loaderBtnSave" class="hidden flex items-center gap-2">
+            <div class="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></div>
+            <span>Menyimpan Progress...</span>
+          </div>
+        </button>
+      </form>
+
+    </div>
+
+  </div>
+
+  <!-- Copyright Footer -->
+  <div class="mt-2 mb-4 text-[10px] text-slate-400 text-center font-medium leading-relaxed">
+    Copyright by Kevin Eleazar Chandra©<br>Beta Test V1.0
+  </div>
+
+  <!-- MODAL DETAIL SELESAI BULAN INI -->
+  <div id="monthlyModal" onclick="closeMonthlyModal()" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all duration-300 opacity-0">
+    <div onclick="event.stopPropagation()" id="monthlyModalCard" class="bg-white border border-slate-200 w-full max-w-md rounded-2xl p-4 space-y-3 transform scale-95 transition-all duration-300 shadow-2xl">
+      
+      <div class="flex justify-between items-center border-b border-slate-200 pb-2">
+        <h3 class="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
+          <span>📅 Selesai Bulan Ini</span>
+          <span class="text-slate-500 font-normal">(<span id="modalTechName">Adib</span>)</span>
+        </h3>
+        <button onclick="closeMonthlyModal()" class="text-slate-400 hover:text-slate-800 text-base font-bold px-2 py-0.5 rounded-lg hover:bg-slate-100 transition">&times;</button>
+      </div>
+      
+      <div id="monthlyModalList" class="space-y-2 max-h-80 overflow-y-auto pr-1 text-xs">
+        <!-- Rincian list kamera selesai bulan ini -->
+      </div>
+
+      <button onclick="closeMonthlyModal()" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold py-2.5 rounded-xl text-xs transition">
+        Tutup Jendela
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyp0zx4Thgz1nh4r7OQAwUpE1izZ6gN3hdU85lMSk1vkW9EuKBBRmbGceKt4229e6yZ/exec";
+    let html5QrcodeScanner = null;
+    let currentActiveSpk = null;
+    let allSpkData = [];
+
+    let resetConfirmState = false;
+    let resetTimeout = null;
+
+    function parseNumeric(val) {
+      if (!val) return 0;
+      if (typeof val === 'number') return isNaN(val) ? 0 : val;
+      const cleaned = String(val).replace(/[^0-9]/g, '');
+      const parsed = parseInt(cleaned, 10);
+      return isNaN(parsed) ? 0 : parsed;
+    }
+
+    // Fungsi Konversi Format Tanggal
+    function parseTargetDate(dateStr) {
+      if (!dateStr || dateStr === '-') return null;
+      let d = new Date(dateStr);
+      if (!isNaN(d.getTime())) return d;
+
+      const str = String(dateStr).trim();
+      if (str.includes('/')) {
+        const parts = str.split(',');
+        const dateParts = parts[0].trim().split('/');
+        if (dateParts.length === 3) {
+          const day = parseInt(dateParts[0], 10);
+          const month = parseInt(dateParts[1], 10) - 1;
+          const year = parseInt(dateParts[2], 10);
+          let timeStr = parts[1] ? parts[1].trim().replace('.', ':') : '00:00';
+          const timeParts = timeStr.split(':');
+          d = new Date(year, month, day, parseInt(timeParts[0] || 0, 10), parseInt(timeParts[1] || 0, 10));
+          if (!isNaN(d.getTime())) return d;
+        }
+      }
+      return null;
+    }
+
+    // Fungsi Membuat Badge Hitung Mundur Sisa Hari
+    function getDeadlineBadgeHtml(targetStr, status) {
+      if (String(status).trim() === 'Selesai') {
+        return `<span class="text-[10px] px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold">✅ Selesai</span>`;
+      }
+
+      const targetDateObj = parseTargetDate(targetStr);
+      if (!targetDateObj) {
+        return `<span class="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-300">Tanpa Target</span>`;
+      }
+
+      const diffHours = (targetDateObj.getTime() - new Date().getTime()) / (1000 * 60 * 60);
+
+      if (diffHours < 0) {
+        const daysOver = Math.ceil(Math.abs(diffHours) / 24);
+        return `<span class="text-[10px] px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 border border-rose-300 font-extrabold animate-pulse">🚨 Lewat ${daysOver} Hari</span>`;
+      }
+      if (diffHours <= 24) {
+        return `<span class="text-[10px] px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 font-extrabold animate-pulse">⚠️ Sisa ${Math.ceil(diffHours)} Jam</span>`;
+      }
+      return `<span class="text-[10px] px-2 py-0.5 rounded-md bg-amber-300 text-slate-950 border border-amber-400 font-black">⏱️ Sisa ${Math.ceil(diffHours / 24)} Hari lagi</span>`;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedTech = localStorage.getItem('activeTeknisi') || 'Adib';
+      document.getElementById('techSelect').value = savedTech;
+      loadDatabase();
+
+      // Poll real-time database setiap 3 detik
+      setInterval(() => {
+        loadDatabase();
+      }, 3000);
+    });
+
+    function changeTechnician() {
+      const selectedTech = document.getElementById('techSelect').value;
+      localStorage.setItem('activeTeknisi', selectedTech);
+      resetResetButtonState();
+
+      // Tutup form editor SPK yang terbuka & reset input manual
+      currentActiveSpk = null;
+      document.getElementById('technicianCard').classList.add('hidden');
+      document.getElementById('manualSpkInput').value = '';
+
+      updateDailySummary();
+      renderPendingQueue();
+    }
+
+    function handleResetClick() {
+      const btn = document.getElementById('btnResetDaily');
+      const currentTech = document.getElementById('techSelect').value;
+
+      if (!resetConfirmState) {
+        resetConfirmState = true;
+        btn.innerText = '⚠️ Yakin Reset?';
+        btn.className = 'bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-[10px] px-2 py-0.5 rounded-lg transition animate-pulse shadow-sm';
+        
+        resetTimeout = setTimeout(() => {
+          resetResetButtonState();
+        }, 3000);
+      } else {
+        clearTimeout(resetTimeout);
+        resetResetButtonState();
+        
+        const todayKey = new Date().toISOString().slice(0, 10);
+        localStorage.setItem(`resetDate_${currentTech}_${todayKey}`, Date.now().toString());
+        updateDailySummary();
+      }
+    }
+
+    function resetResetButtonState() {
+      resetConfirmState = false;
+      const btn = document.getElementById('btnResetDaily');
+      if (btn) {
+        btn.innerText = '🧹 Reset';
+        btn.className = 'bg-slate-200 hover:bg-slate-300 text-slate-700 hover:text-rose-700 border border-slate-300 text-[10px] px-2 py-0.5 rounded-lg transition font-bold';
+      }
+    }
+
+    async function loadDatabase() {
+      try {
+        const noCacheUrl = SHEET_WEB_APP_URL + (SHEET_WEB_APP_URL.includes('?') ? '&' : '?') + '_nc=' + Date.now();
+        const res = await fetch(noCacheUrl, { redirect: 'follow' });
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          allSpkData = data;
+          localStorage.setItem('spkData', JSON.stringify(allSpkData));
+        }
+      } catch (err) {
+        try {
+          allSpkData = JSON.parse(localStorage.getItem('spkData')) || [];
+        } catch (e) {
+          allSpkData = [];
+        }
+      }
+      updateDailySummary();
+      renderPendingQueue();
+    }
+
+    function isTechMatched(item, currentTech) {
+      const target = currentTech.toLowerCase();
+      const techName = String(item.teknisiName || '').toLowerCase();
+      const updatedBy = String(item.updatedBy || '').toLowerCase();
+      
+      if (techName.includes(target)) return true;
+      if (updatedBy.includes(target)) return true;
+      return false;
+    }
+
+    function isCompletedToday(item) {
+      const now = new Date();
+      if (item.completedAtTimestamp) {
+        const d = new Date(item.completedAtTimestamp);
+        return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      }
+
+      const dateStr = item.completedAt || item.createdAt || '';
+      if (dateStr.includes('/')) {
+        const parts = dateStr.split(',')[0].trim().split('/');
+        if (parts.length === 3) {
+          const day = parseInt(parts[0], 10);
+          const month = parseInt(parts[1], 10) - 1;
+          const year = parseInt(parts[2], 10);
+          return day === now.getDate() && month === now.getMonth() && year === now.getFullYear();
+        }
+      }
+
+      const d = new Date(dateStr);
+      if (!isNaN(d.getTime())) {
+        return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      }
+
+      return false;
+    }
+
+    function isCompletedThisMonth(item) {
+      const now = new Date();
+      if (item.completedAtTimestamp) {
+        const d = new Date(item.completedAtTimestamp);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      }
+
+      const dateStr = item.completedAt || item.createdAt || '';
+      if (dateStr.includes('/')) {
+        const parts = dateStr.split(',')[0].trim().split('/');
+        if (parts.length === 3) {
+          const month = parseInt(parts[1], 10) - 1;
+          const year = parseInt(parts[2], 10);
+          return month === now.getMonth() && year === now.getFullYear();
+        }
+      }
+
+      const d = new Date(dateStr);
+      if (!isNaN(d.getTime())) {
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      }
+
+      return false;
+    }
+
+    function updateDailySummary() {
+      const currentTech = document.getElementById('techSelect').value;
+      document.getElementById('techNameSummary').innerText = currentTech;
+      
+      const todayKey = new Date().toISOString().slice(0, 10);
+      const resetTime = parseInt(localStorage.getItem(`resetDate_${currentTech}_${todayKey}`) || '0', 10);
+
+      try {
+        allSpkData = JSON.parse(localStorage.getItem('spkData')) || [];
+      } catch(e) {}
+
+      const completedToday = allSpkData.filter(item => {
+        const isSelesai = String(item.status || '').trim() === 'Selesai';
+        const techMatch = isTechMatched(item, currentTech);
+        const dateMatch = isCompletedToday(item);
+
+        const itemTime = item.completedAtTimestamp || item.lastLocalEdit || 0;
+        const isAfterReset = resetTime === 0 || itemTime > resetTime;
+
+        return isSelesai && techMatch && dateMatch && isAfterReset;
+      });
+
+      const completedMonthly = allSpkData.filter(item => {
+        const isSelesai = String(item.status || '').trim() === 'Selesai';
+        const techMatch = isTechMatched(item, currentTech);
+        return isSelesai && techMatch && isCompletedThisMonth(item);
+      });
+
+      document.getElementById('dailyCount').innerText = `${completedToday.length} Unit`;
+      document.getElementById('monthlyCount').innerText = `${completedMonthly.length} Unit`;
+
+      const listContainer = document.getElementById('dailyList');
+      listContainer.innerHTML = '';
+
+      if (completedToday.length === 0) {
+        listContainer.innerHTML = '<p class="text-slate-400 italic text-center py-1">Belum ada unit diselesaikan hari ini.</p>';
+        return;
+      }
+
+      completedToday.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'flex justify-between items-center bg-white px-2 py-1.5 rounded-lg border border-slate-200 text-xs shadow-sm';
+        div.innerHTML = `
+          <span class="font-extrabold text-slate-900">${item.id}</span>
+          <span class="text-slate-800 truncate max-w-[180px] font-medium">${item.type || 'Unit'} ${item.model || ''}</span>
+          <span class="text-[9px] text-slate-500">${item.rincianBiaya || 'Selesai'}</span>
+        `;
+        listContainer.appendChild(div);
+      });
+    }
+
+    // RENDERING DAFTAR ANTRIAN MENUNGGU (LIVE QUEUE)
+    function renderPendingQueue() {
+      const currentTech = document.getElementById('techSelect').value;
+      document.getElementById('queueTechName').innerText = currentTech;
+
+      try {
+        allSpkData = JSON.parse(localStorage.getItem('spkData')) || [];
+      } catch(e) {}
+
+      // Filter SPK yang diserahkan ke teknisi ini & BELUM SELESAI
+      const pendingQueue = allSpkData.filter(item => {
+        const techMatch = isTechMatched(item, currentTech);
+        const isNotDone = String(item.status || '').trim() !== 'Selesai';
+        return techMatch && isNotDone;
+      });
+
+      document.getElementById('queueCountBadge').innerText = `${pendingQueue.length} Unit`;
+
+      const queueContainer = document.getElementById('queueListContainer');
+      queueContainer.innerHTML = '';
+
+      if (pendingQueue.length === 0) {
+        queueContainer.innerHTML = '<p class="text-slate-400 italic text-center py-3">Tidak ada antrian pekerjaan aktif.</p>';
+        return;
+      }
+
+      pendingQueue.forEach(item => {
+        const card = document.createElement('div');
+        card.onclick = () => {
+          findAndLoadSPK(item.id);
+          const targetEl = document.getElementById('technicianCard');
+          if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth' });
+        };
+        card.className = 'bg-white hover:bg-amber-50/60 p-2.5 rounded-xl border border-slate-200 hover:border-amber-400 cursor-pointer transition shadow-sm space-y-1.5 group active:scale-95';
+
+        const deadlineBadge = getDeadlineBadgeHtml(item.targetDate, item.status);
+        const statusTxt = item.status || 'Diterima';
+
+        card.innerHTML = `
+          <div class="flex justify-between items-center">
+            <div class="flex items-center gap-1.5">
+              <span class="font-black text-slate-900 bg-amber-300 px-2 py-0.5 rounded text-[11px] border border-amber-400">${item.id}</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-300">${statusTxt}</span>
+            </div>
+            ${deadlineBadge}
+          </div>
+          <div class="flex justify-between items-baseline pt-0.5">
+            <div>
+              <p class="font-black text-slate-900 text-xs">${item.type || 'Unit'}: ${item.model || '-'}</p>
+              <p class="text-[10px] text-slate-500 font-medium">Pemilik: ${item.name || '-'}</p>
+            </div>
+            <span class="text-[10px] text-amber-800 group-hover:underline font-extrabold flex items-center gap-0.5">
+              <span>Proses</span> ➔
+            </span>
+          </div>
+          <p class="text-[10px] text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded border border-rose-200 truncate">
+            Keluhan: ${item.issue || '-'}
+          </p>
+        `;
+
+        queueContainer.appendChild(card);
+      });
+    }
+
+    function openMonthlyModal() {
+      const currentTech = document.getElementById('techSelect').value;
+      document.getElementById('modalTechName').innerText = currentTech;
+
+      try {
+        allSpkData = JSON.parse(localStorage.getItem('spkData')) || [];
+      } catch(e) {}
+
+      const completedMonthly = allSpkData.filter(item => {
+        const isSelesai = String(item.status || '').trim() === 'Selesai';
+        const techMatch = isTechMatched(item, currentTech);
+        return isSelesai && techMatch && isCompletedThisMonth(item);
+      });
+
+      const modalList = document.getElementById('monthlyModalList');
+      modalList.innerHTML = '';
+
+      if (completedMonthly.length === 0) {
+        modalList.innerHTML = '<p class="text-slate-400 italic text-center py-6">Belum ada unit yang diselesaikan bulan ini.</p>';
+      } else {
+        completedMonthly.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200 hover:border-amber-300 transition shadow-sm';
+          
+          const dateTxt = item.completedAt || item.createdAt || '-';
+          const totalCost = parseNumeric(item.biaya);
+
+          div.innerHTML = `
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="font-black text-slate-900">${item.id}</span>
+                <span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 border border-amber-300 font-bold">${item.type || 'Unit'}</span>
+              </div>
+              <p class="text-[11px] font-bold text-slate-900 mt-0.5">${item.model || '-'}</p>
+              <p class="text-[9px] text-slate-500">🕒 Selesai: ${dateTxt}</p>
+            </div>
+            <div class="text-right">
+              <span class="text-[10px] font-semibold text-slate-700 block">${item.rincianBiaya || 'Perbaikan Complete'}</span>
+              <span class="text-[11px] font-black text-slate-950">Rp ${totalCost.toLocaleString('id-ID')}</span>
+            </div>
+          `;
+          modalList.appendChild(div);
+        });
+      }
+
+      const modal = document.getElementById('monthlyModal');
+      const modalCard = document.getElementById('monthlyModalCard');
+      
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        modalCard.classList.remove('scale-95');
+        modalCard.classList.add('scale-100');
+      }, 10);
+    }
+
+    function closeMonthlyModal() {
+      const modal = document.getElementById('monthlyModal');
+      const modalCard = document.getElementById('monthlyModalCard');
+      
+      modal.classList.add('opacity-0');
+      modalCard.classList.remove('scale-100');
+      modalCard.classList.add('scale-95');
+      
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 300);
+    }
+
+    function playBeep() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, ctx.currentTime);
+        osc.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.15);
+      } catch(e) {}
+    }
+
+    function startScanner() {
+      if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+        alert("⚠️ Kamera hanya bisa diakses via HTTPS aman. Buka link ini melalui GitHub Pages (https://)!");
+        return;
+      }
+
+      document.getElementById('btnStartScan').classList.add('hidden');
+      document.getElementById('btnStopScan').classList.remove('hidden');
+
+      html5QrcodeScanner = new Html5Qrcode("reader");
+
+      html5QrcodeScanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 220, height: 150 } },
+        onScanSuccess
+      ).catch(() => {
+        Html5Qrcode.getCameras().then(devices => {
+          if (devices && devices.length) {
+            const cameraId = devices[devices.length - 1].id;
+            html5QrcodeScanner.start(
+              cameraId,
+              { fps: 10, qrbox: { width: 220, height: 150 } },
+              onScanSuccess
+            ).catch(() => {
+              alert("Gagal membuka kamera.");
+              stopScanner();
+            });
+          }
+        }).catch(() => {
+          alert("Kamera tidak ditemukan.");
+          stopScanner();
+        });
+      });
+    }
+
+    function onScanSuccess(decodedText) {
+      playBeep();
+      stopScanner();
+      findAndLoadSPK(decodedText.trim());
+    }
+
+    function stopScanner() {
+      if (html5QrcodeScanner) {
+        html5QrcodeScanner.stop().then(() => {
+          html5QrcodeScanner.clear();
+          document.getElementById('btnStartScan').classList.remove('hidden');
+          document.getElementById('btnStopScan').classList.add('hidden');
+        }).catch(() => {
+          document.getElementById('btnStartScan').classList.remove('hidden');
+          document.getElementById('btnStopScan').classList.add('hidden');
+        });
+      }
+    }
+
+    function searchManualSPK() {
+      const query = document.getElementById('manualSpkInput').value.trim();
+      if (!query) return alert("Ketik Nomor SPK terlebih dahulu!");
+      findAndLoadSPK(query);
+    }
+
+    async function findAndLoadSPK(spkIdQuery) {
+      document.getElementById('loading').classList.remove('hidden');
+      document.getElementById('technicianCard').classList.add('hidden');
+
+      await loadDatabase();
+
+      await new Promise(r => setTimeout(r, 300));
+      document.getElementById('loading').classList.add('hidden');
+
+      const found = allSpkData.find(item => String(item.id || '').trim().toLowerCase() === spkIdQuery.toLowerCase());
+
+      if (!found) {
+        alert(`Data SPK "${spkIdQuery}" tidak ditemukan di database!`);
+        return;
+      }
+
+      currentActiveSpk = found;
+
+      document.getElementById('tkSpkId').innerText = found.id;
+      document.getElementById('tkDelivery').innerText = found.deliveryType || 'Store';
+      document.getElementById('tkUnit').innerText = `${found.type || 'Unit'} - ${found.model || '-'}`;
+      document.getElementById('tkOwner').innerText = `Pemilik: ${found.name || '-'} (${found.phone || '-'})`;
+      document.getElementById('tkKondisi').innerText = `Kondisi Fisik: ${found.kondisi || '-'}`;
+      document.getElementById('tkIssue').innerText = found.issue || '-';
+      document.getElementById('tkStatusSelect').value = found.status || 'Diagnosa';
+      
+      // Hitung Sisa Hari & Pasang Badge Waktu Target
+      document.getElementById('tkDeadlineBadge').innerHTML = getDeadlineBadgeHtml(found.targetDate, found.status);
+
+      let notesText = String(found.notes || '').trim();
+      if (!notesText || notesText.includes('/202') || notesText.includes('T')) {
+        notesText = "Unit baru diterima di kasir toko.";
+      }
+      document.getElementById('tkNotesInput').value = notesText;
+
+      document.getElementById('technicianCard').classList.remove('hidden');
+    }
+
+    async function saveTechnicianUpdate(e) {
+      e.preventDefault();
+      if (!currentActiveSpk) return;
+
+      const currentTech = document.getElementById('techSelect').value;
+      const newStatus = document.getElementById('tkStatusSelect').value;
+      const newNotes = document.getElementById('tkNotesInput').value.trim();
+
+      const btnSave = document.getElementById('btnSaveSubmit');
+      const txtBtn = document.getElementById('txtBtnSave');
+      const loaderBtn = document.getElementById('loaderBtnSave');
+
+      btnSave.disabled = true;
+      txtBtn.classList.add('hidden');
+      loaderBtn.classList.remove('hidden');
+
+      currentActiveSpk.status = newStatus;
+      currentActiveSpk.notes = newNotes;
+      currentActiveSpk.teknisiName = currentTech;
+      currentActiveSpk.updatedBy = `Teknisi (${currentTech})`;
+      currentActiveSpk.hasUnreadUpdate = true;
+      currentActiveSpk.lastLocalEdit = Date.now();
+
+      if (newStatus === 'Selesai') {
+        currentActiveSpk.completedAtTimestamp = Date.now();
+        const now = new Date();
+        currentActiveSpk.completedAt = now.toLocaleDateString('id-ID') + ', ' + now.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
+
+        if (!currentActiveSpk.biaya || currentActiveSpk.biaya === 0) {
+          const estDefault = currentActiveSpk.estimasiBiaya || 350000;
+          const inputBiaya = prompt(`[${currentTech}] Unit Selesai! Masukkan Total Biaya Service (Rp):`, estDefault);
+          if (inputBiaya !== null) {
+            currentActiveSpk.biaya = parseInt(inputBiaya) || 0;
+            currentActiveSpk.rincianBiaya = prompt("Rincian Pekerjaan / Sparepart:", "Jasa Service & Kalibrasi Unit") || "";
+          }
+          currentActiveSpk.paymentStatus = "Belum Lunas";
+        }
+      }
+
+      try {
+        let localData = JSON.parse(localStorage.getItem('spkData')) || [];
+        const idx = localData.findIndex(item => String(item.id).toLowerCase() === String(currentActiveSpk.id).toLowerCase());
+        if (idx !== -1) {
+          localData[idx] = currentActiveSpk;
+        } else {
+          localData.unshift(currentActiveSpk);
+        }
+        localStorage.setItem('spkData', JSON.stringify(localData));
+        allSpkData = localData;
+      } catch(err) {}
+
+      try {
+        await fetch(SHEET_WEB_APP_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(currentActiveSpk)
+        });
+      } catch (err) {
+        console.warn("Gagal sync online, tersimpan lokal.");
+      }
+
+      await new Promise(r => setTimeout(r, 400));
+
+      btnSave.disabled = false;
+      txtBtn.classList.remove('hidden');
+      loaderBtn.classList.add('hidden');
+
+      updateDailySummary();
+      renderPendingQueue();
+
+      alert(`✅ Success! [${currentTech}] berhasil memperbarui SPK ${currentActiveSpk.id}.`);
+      document.getElementById('technicianCard').classList.add('hidden');
+      document.getElementById('manualSpkInput').value = '';
+    }
+  </script>
+</body>
+</html>
