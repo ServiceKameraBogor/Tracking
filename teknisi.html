@@ -7,53 +7,149 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Library Scan Barcode & QR Code -->
   <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    #printableArea { display: none; }
+    @media print {
+      @page { margin: 1cm; size: auto; }
+      body { background: #fff !important; color: #000 !important; }
+      body * { visibility: hidden !important; }
+      #printableArea, #printableArea * { visibility: visible !important; }
+      #printableArea {
+        display: block !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        font-size: 10pt;
+        color: #000 !important;
+        background: #fff !important;
+      }
+      .no-print { display: none !important; }
+    }
+  </style>
 </head>
-<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col items-center p-4">
+<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col items-center p-4 relative">
 
-  <div class="w-full max-w-md bg-white rounded-2xl shadow-lg p-5 border border-slate-200 space-y-4">
+  <!-- OVERLAY SIDEBAR NAVIGASI KIRI -->
+  <div id="sideNavOverlay" onclick="toggleSideNav()" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 transition-opacity duration-300 opacity-0 no-print"></div>
+
+  <!-- DRAWER MENU NAVIGASI KIRI -->
+  <div id="sideNavDrawer" class="fixed top-0 left-0 bottom-0 w-72 bg-slate-900 text-white z-50 transform -translate-x-full transition-transform duration-300 ease-in-out shadow-2xl flex flex-col justify-between p-4 no-print">
+    <div class="space-y-4">
+      <!-- Header Drawer -->
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <div>
+          <h2 class="text-sm font-black text-amber-400 tracking-wider">MENU TEKNISI</h2>
+          <p class="text-[10px] text-slate-400 font-medium">Portal Navigasi Utama</p>
+        </div>
+        <button onclick="toggleSideNav()" class="text-slate-400 hover:text-white text-xl font-bold p-1 rounded-lg hover:bg-slate-800 transition">&times;</button>
+      </div>
+
+      <!-- List Menu Navigasi -->
+      <div class="space-y-2">
+        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-2">Menu Layanan</p>
+
+        <!-- Menu 1: Serah Terima -->
+        <button onclick="openManifestModalFromNav()" class="w-full bg-slate-800 hover:bg-emerald-600/20 text-slate-200 hover:text-emerald-400 font-extrabold text-xs p-3 rounded-xl transition flex items-center justify-between border border-slate-700/60 hover:border-emerald-500/50 group text-left shadow-sm">
+          <div class="flex items-center gap-2.5">
+            <span class="text-lg">📦</span>
+            <div>
+              <span class="block">Serah Terima Hari Ini</span>
+              <span class="text-[9px] text-slate-400 font-normal group-hover:text-emerald-300">Softcopy Manifest</span>
+            </div>
+          </div>
+          <span id="manifestBadgeCountNav" class="bg-emerald-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full border border-emerald-400">0 Unit</span>
+        </button>
+
+        <!-- Menu 2: Laporan Penghasilan -->
+        <button onclick="openIncomeModalFromNav()" class="w-full bg-slate-800 hover:bg-amber-400/10 text-slate-200 hover:text-amber-400 font-extrabold text-xs p-3 rounded-xl transition flex items-center justify-between border border-slate-700/60 hover:border-amber-400/40 group text-left shadow-sm">
+          <div class="flex items-center gap-2.5">
+            <span class="text-lg">💰</span>
+            <div>
+              <span class="block">Laporan Penghasilan</span>
+              <span class="text-[9px] text-slate-400 font-normal group-hover:text-amber-300">Rincian Per Bulan</span>
+            </div>
+          </div>
+          <span class="text-xs">📊</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Drawer Footer -->
+    <div class="border-t border-slate-800 pt-3 text-[10px] text-slate-400 text-center font-medium">
+      👨‍🔧 Teknisi Aktif: <b id="navActiveTech" class="text-amber-400">Adib</b>
+    </div>
+  </div>
+
+  <!-- NOTIFIKASI KIRI ATAS UNTUK SERAH TERIMA BARU -->
+  <div id="toastNotification" class="hidden fixed top-4 left-4 z-40 bg-slate-900 text-white border-2 border-amber-400 p-3.5 rounded-2xl shadow-2xl flex items-center gap-3 max-w-xs transition-all duration-300 no-print">
+    <div class="bg-amber-400 text-slate-950 p-2.5 rounded-xl text-xl font-black animate-bounce">📦</div>
+    <div class="flex-1 text-xs">
+      <p class="font-black text-amber-300 text-xs">Serah Terima Baru!</p>
+      <p class="text-[11px] text-slate-200 mt-0.5" id="toastText">Ada unit serah terima baru masuk dari Admin.</p>
+    </div>
+    <button onclick="dismissToast()" class="text-slate-400 hover:text-white font-bold text-base px-1.5 py-0.5 rounded-lg hover:bg-slate-800 transition">&times;</button>
+  </div>
+
+  <div class="w-full max-w-md bg-white rounded-2xl shadow-lg p-5 border border-slate-200 space-y-4 no-print">
     
     <!-- Header & Pilihan Teknisi -->
     <div class="border-b border-slate-200 pb-3 space-y-2">
-      <div class="flex justify-between items-center">
-        <div>
-          <h1 class="text-xl font-black text-slate-900 tracking-tight">SERVICE KAMERA BOGOR</h1>
-          <p class="text-xs text-slate-500 font-bold tracking-wider mt-0.5">PORTAL TEKNISI</p>
+      <div class="flex justify-between items-center gap-2">
+        <div class="flex items-center gap-2.5">
+          <!-- Tombol Buka Menu Navigasi Kiri -->
+          <button onclick="toggleSideNav()" title="Buka Menu" class="bg-slate-900 text-amber-400 p-2 rounded-xl text-sm font-black hover:bg-slate-800 transition active:scale-95 shadow-sm flex items-center justify-center border border-amber-400/30">
+            ☰ Menu
+          </button>
+          <div>
+            <h1 class="text-base font-black text-slate-900 tracking-tight leading-tight">SERVICE KAMERA BOGOR</h1>
+            <p class="text-[10px] text-slate-500 font-bold tracking-wider">PORTAL TEKNISI</p>
+          </div>
         </div>
         
         <!-- Dropdown Pilih Teknisi -->
         <select id="techSelect" onchange="changeTechnician()" class="bg-amber-300 border border-amber-400 text-slate-950 font-black text-xs p-2 rounded-xl outline-none focus:ring-2 focus:ring-amber-400 transition cursor-pointer shadow-sm">
-          <option value="Adib">👨‍🔧 Teknisi Adib</option>
-          <option value="Oky">👨‍🔧 Teknisi Oky</option>
+          <option value="Adib">👨‍🔧 Adib</option>
+          <option value="Oky">👨‍🔧 Oky</option>
         </select>
       </div>
     </div>
 
-    <!-- Summary Box: Selesai Hari Ini & Bulan Ini + Tombol Reset (2x Klik) -->
+    <!-- Summary Box: Selesai Hari Ini & Bulan Ini + Tombol Reset Terpisah -->
     <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl space-y-2.5 shadow-sm">
       <div class="flex justify-between items-center border-b border-slate-200 pb-2">
         <span class="text-xs font-bold text-slate-800 flex items-center gap-1">
           📊 Statistik (<span id="techNameSummary">Adib</span>):
         </span>
-        
-        <button id="btnResetDaily" onclick="handleResetClick()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 hover:text-rose-700 border border-slate-300 text-[10px] px-2 py-0.5 rounded-lg transition font-bold">
-          🧹 Reset
-        </button>
       </div>
 
       <!-- Badges Hitungan Hari Ini & Bulan Ini -->
       <div class="grid grid-cols-2 gap-2 text-center">
-        <div class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm">
-          <span class="text-[10px] text-slate-500 font-semibold block">Selesai Hari Ini</span>
-          <span id="dailyCount" class="text-sm font-black text-slate-900">0 Unit</span>
+        <!-- Kartu Hari Ini -->
+        <div class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div class="flex justify-between items-center border-b border-slate-100 pb-1 mb-1">
+            <span class="text-[10px] text-slate-500 font-bold">Selesai Hari Ini</span>
+            <button id="btnResetDaily" onclick="handleResetDaily()" class="bg-slate-100 hover:bg-rose-100 text-slate-600 hover:text-rose-700 text-[9px] px-1.5 py-0.5 rounded-md border border-slate-200 font-bold transition">
+              🧹 Reset
+            </button>
+          </div>
+          <span id="dailyCount" class="text-sm font-black text-slate-900 my-1">0 Unit</span>
         </div>
         
-        <!-- Kartu Selesai Bulan Ini -->
-        <div onclick="openMonthlyModal()" class="bg-white hover:bg-slate-50 p-2.5 rounded-xl border border-slate-200 hover:border-amber-400 cursor-pointer active:scale-95 transition-all duration-150 shadow-sm group">
-          <span class="text-[10px] text-slate-500 font-semibold block flex items-center justify-center gap-1">
-            <span>Selesai Bulan Ini</span>
-            <span class="text-[9px] group-hover:translate-x-0.5 transition-transform">🔍</span>
-          </span>
-          <span id="monthlyCount" class="text-sm font-black text-slate-900">0 Unit</span>
+        <!-- Kartu Bulan Ini -->
+        <div class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div class="flex justify-between items-center border-b border-slate-100 pb-1 mb-1">
+            <span class="text-[10px] text-slate-500 font-bold">Selesai Bulan Ini</span>
+            <button id="btnResetMonthly" onclick="handleResetMonthly()" class="bg-slate-100 hover:bg-rose-100 text-slate-600 hover:text-rose-700 text-[9px] px-1.5 py-0.5 rounded-md border border-slate-200 font-bold transition">
+              🧹 Reset
+            </button>
+          </div>
+          <div onclick="openMonthlyModal()" class="cursor-pointer hover:opacity-80 transition group">
+            <span id="monthlyCount" class="text-sm font-black text-slate-900 my-1 flex items-center justify-center gap-1">
+              <span>0 Unit</span>
+              <span class="text-[10px]">🔍</span>
+            </span>
+          </div>
         </div>
       </div>
       
@@ -108,7 +204,7 @@
       <div class="relative flex justify-center items-center my-1">
         <div class="w-10 h-10 border-4 border-amber-200 border-t-amber-500 rounded-full animate-spin"></div>
       </div>
-      <p class="text-xs font-bold text-slate-800 animate-pulse">🔍 Mencari Data SPK...</p>
+      <p class="text-xs font-bold text-slate-800 animate-pulse">☁️ Sinkronisasi Cloud Database...</p>
     </div>
 
     <!-- Card Editor Teknisi -->
@@ -119,7 +215,6 @@
         <div class="flex justify-between items-start">
           <span id="tkSpkId" class="text-base font-black text-slate-900 bg-amber-300 px-2.5 py-0.5 rounded-lg border border-amber-400">SPK-000</span>
           
-          <!-- Indikator Sisa Hari & Delivery Type -->
           <div class="flex flex-col items-end gap-1">
             <span id="tkDeadlineBadge"></span>
             <span id="tkDelivery" class="text-[10px] px-2 py-0.5 rounded bg-slate-200 text-slate-700 border border-slate-300 font-bold">-</span>
@@ -140,24 +235,32 @@
           <label class="block text-xs font-bold text-slate-800 mb-1">Status Pekerjaan:</label>
           <select id="tkStatusSelect" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 font-bold outline-none focus:border-amber-400">
             <option value="Diterima">📥 Diterima Kasir</option>
+            <option value="Antrian Pengecekan">📋 Antrian Pengecekan</option>
             <option value="Diagnosa">🔍 Diagnosa / Pengecekan</option>
             <option value="Pengerjaan">🛠️ Dalam Pengerjaan</option>
             <option value="Selesai">✅ Selesai Dikerjakan</option>
+            <option value="Cancel">❌ Cancel / Batal</option>
           </select>
         </div>
 
         <div>
           <label class="block text-xs font-bold text-slate-800 mb-1">Catatan Progress / Hasil Check:</label>
-          <textarea id="tkNotesInput" rows="3" placeholder="Contoh: Flexible shutter sudah diganti, saat ini proses kalibrasi fokus." class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 outline-none focus:border-amber-400 font-medium"></textarea>
+          <textarea id="tkNotesInput" rows="2" placeholder="Contoh: Flexible shutter sudah diganti, saat ini proses kalibrasi fokus." class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 outline-none focus:border-amber-400 font-medium"></textarea>
         </div>
 
-        <!-- Tombol Simpan + Animasi Loading -->
+        <div>
+          <label class="block text-xs font-bold text-slate-800 mb-1">Rincian Pekerjaan / Sparepart:</label>
+          <input type="text" id="tkRincianInput" placeholder="Contoh: Ganti Flex Shutter & Clean Sensor" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 outline-none focus:border-amber-400 font-medium">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-800 mb-1">Total Biaya Akhir (Rp):</label>
+          <input type="number" id="tkBiayaInput" placeholder="Contoh: 350000" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 outline-none focus:border-amber-400 font-medium">
+        </div>
+
+        <!-- Tombol Simpan Instant -->
         <button type="submit" id="btnSaveSubmit" class="w-full bg-amber-400 hover:bg-amber-500 text-slate-950 font-extrabold py-3 rounded-xl text-xs transition shadow-sm flex items-center justify-center gap-2">
-          <span id="txtBtnSave">💾 Simpan Update Progress</span>
-          <div id="loaderBtnSave" class="hidden flex items-center gap-2">
-            <div class="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></div>
-            <span>Menyimpan Progress...</span>
-          </div>
+          <span>💾 Simpan Update Progress</span>
         </button>
       </form>
 
@@ -166,12 +269,12 @@
   </div>
 
   <!-- Copyright Footer -->
-  <div class="mt-2 mb-4 text-[10px] text-slate-400 text-center font-medium leading-relaxed">
-    Copyright by Kevin Eleazar Chandra©<br>Beta Test V1.0
+  <div class="mt-2 mb-4 text-[10px] text-slate-400 text-center font-medium leading-relaxed no-print">
+    Copyright by Kevin Eleazar Chandra©<br>Build V1.1
   </div>
 
   <!-- MODAL DETAIL SELESAI BULAN INI -->
-  <div id="monthlyModal" onclick="closeMonthlyModal()" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all duration-300 opacity-0">
+  <div id="monthlyModal" onclick="closeMonthlyModal()" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all duration-300 opacity-0 no-print">
     <div onclick="event.stopPropagation()" id="monthlyModalCard" class="bg-white border border-slate-200 w-full max-w-md rounded-2xl p-4 space-y-3 transform scale-95 transition-all duration-300 shadow-2xl">
       
       <div class="flex justify-between items-center border-b border-slate-200 pb-2">
@@ -192,14 +295,160 @@
     </div>
   </div>
 
+  <!-- MODAL SOFTCOPY SURAT SERAH TERIMA -->
+  <div id="manifestModal" onclick="closeManifestModal()" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 transition-all duration-300 opacity-0 no-print">
+    <div onclick="event.stopPropagation()" id="manifestModalCard" class="bg-white border border-slate-200 w-full max-w-lg rounded-2xl p-4 space-y-3 transform scale-95 transition-all duration-300 shadow-2xl max-h-[90vh] flex flex-col">
+      
+      <div class="flex justify-between items-center border-b border-slate-200 pb-2">
+        <div>
+          <h3 class="text-xs font-black text-slate-900 flex items-center gap-1.5">
+            <span>📄 SURAT SERAH TERIMA (HARI INI)</span>
+          </h3>
+          <p class="text-[10px] text-slate-500 font-bold">Penerima: <span id="manifestModalTech">Teknisi Adib</span></p>
+        </div>
+        <button onclick="closeManifestModal()" class="text-slate-400 hover:text-slate-800 text-base font-bold px-2 py-0.5 rounded-lg hover:bg-slate-100 transition">&times;</button>
+      </div>
+
+      <!-- Content Surat Softcopy -->
+      <div id="manifestModalContent" class="space-y-3 overflow-y-auto pr-1 text-xs flex-1">
+        <!-- Render otomatis via JavaScript -->
+      </div>
+
+      <div class="flex gap-2 pt-2 border-t border-slate-100">
+        <button onclick="printManifestPDF()" class="flex-1 bg-amber-400 hover:bg-amber-500 text-slate-950 font-extrabold py-2.5 rounded-xl text-xs transition shadow-sm flex items-center justify-center gap-1">
+          <span>🖨️ Cetak / Simpan PDF</span>
+        </button>
+        <button onclick="closeManifestModal()" class="flex-1 bg-slate-900 text-amber-400 font-extrabold py-2.5 rounded-xl text-xs transition">
+          Tutup Jendela
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL LAPORAN PENGHASILAN PER BULAN -->
+  <div id="incomeModal" onclick="closeIncomeModal()" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 transition-all duration-300 opacity-0 no-print">
+    <div onclick="event.stopPropagation()" id="incomeModalCard" class="bg-white border border-slate-200 w-full max-w-md rounded-2xl p-4 space-y-3 transform scale-95 transition-all duration-300 shadow-2xl max-h-[90vh] flex flex-col">
+      
+      <div class="flex justify-between items-center border-b border-slate-200 pb-2">
+        <div>
+          <h3 class="text-xs font-black text-slate-900 flex items-center gap-1.5">
+            <span>💰 LAPORAN PENGHASILAN TEKNISI</span>
+          </h3>
+          <p class="text-[10px] text-slate-500 font-bold">Teknisi: <span id="incomeModalTech">Adib</span></p>
+        </div>
+        <button onclick="closeIncomeModal()" class="text-slate-400 hover:text-slate-800 text-base font-bold px-2 py-0.5 rounded-lg hover:bg-slate-100 transition">&times;</button>
+      </div>
+
+      <!-- Filter Pilih Bulan -->
+      <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
+        <label class="text-[11px] font-bold text-slate-700 whitespace-nowrap">Pilih Bulan:</label>
+        <select id="incomeMonthSelect" onchange="renderIncomeDetails()" class="flex-1 bg-white border border-slate-300 text-slate-900 font-bold text-xs p-1.5 rounded-lg outline-none focus:border-amber-400">
+          <!-- Option bulan diisi otomatis JS -->
+        </select>
+      </div>
+
+      <!-- Summary Banner Penghasilan Bulan Ini -->
+      <div class="bg-amber-300 border border-amber-400 p-3 rounded-xl flex justify-between items-center text-slate-950 shadow-sm">
+        <div>
+          <p class="text-[10px] font-bold uppercase tracking-wider text-slate-800">Total Penghasilan Servis</p>
+          <h2 id="incomeGrandTotal" class="text-lg font-black tracking-tight mt-0.5">Rp 0</h2>
+        </div>
+        <div class="text-right">
+          <p class="text-[10px] font-bold text-slate-800">Total Selesai</p>
+          <span id="incomeUnitCount" class="text-sm font-black bg-slate-900 text-amber-300 px-2.5 py-0.5 rounded-lg inline-block mt-0.5">0 Unit</span>
+        </div>
+      </div>
+
+      <!-- Daftar Unit Selesai di Bulan Terpilih -->
+      <div id="incomeListContent" class="space-y-2 overflow-y-auto pr-1 text-xs flex-1">
+        <!-- Render list otomatis -->
+      </div>
+
+      <button onclick="closeIncomeModal()" class="w-full bg-slate-900 text-amber-400 font-extrabold py-2.5 rounded-xl text-xs transition">
+        Tutup Laporan
+      </button>
+    </div>
+  </div>
+
+  <div id="printableArea"></div>
+
   <script>
     const SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyp0zx4Thgz1nh4r7OQAwUpE1izZ6gN3hdU85lMSk1vkW9EuKBBRmbGceKt4229e6yZ/exec";
     let html5QrcodeScanner = null;
     let currentActiveSpk = null;
     let allSpkData = [];
+    let lastHandoverCount = 0;
 
-    let resetConfirmState = false;
-    let resetTimeout = null;
+    let resetDailyState = false;
+    let resetMonthlyState = false;
+    let resetDailyTimeout = null;
+    let resetMonthlyTimeout = null;
+
+    // EVENT LISTENER REAL-TIME UNTUK SINKRONISASI LOKAL LANGSUNG DARI WEB ADMIN
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'spkData') {
+        try {
+          allSpkData = JSON.parse(e.newValue) || [];
+          updateDailySummary();
+          renderPendingQueue();
+          updateManifestBadge();
+        } catch(err) {}
+      }
+    });
+
+    function toggleSideNav() {
+      const overlay = document.getElementById('sideNavOverlay');
+      const drawer = document.getElementById('sideNavDrawer');
+      const techSelect = document.getElementById('techSelect');
+      
+      if (document.getElementById('navActiveTech') && techSelect) {
+        document.getElementById('navActiveTech').innerText = techSelect.value;
+      }
+
+      updateManifestBadge();
+
+      if (drawer.classList.contains('-translate-x-full')) {
+        overlay.classList.remove('hidden');
+        setTimeout(() => {
+          overlay.classList.remove('opacity-0');
+          drawer.classList.remove('-translate-x-full');
+        }, 10);
+      } else {
+        drawer.classList.add('-translate-x-full');
+        overlay.classList.add('opacity-0');
+        setTimeout(() => {
+          overlay.classList.add('hidden');
+        }, 300);
+      }
+    }
+
+    function openManifestModalFromNav() {
+      toggleSideNav();
+      openManifestModal();
+    }
+
+    function openIncomeModalFromNav() {
+      toggleSideNav();
+      openIncomeModal();
+    }
+
+    function getVal(item, ...possibleKeys) {
+      if (!item) return '';
+      for (let key of possibleKeys) {
+        if (item[key] !== undefined && item[key] !== null && item[key] !== '') {
+          return item[key];
+        }
+      }
+      const itemKeys = Object.keys(item);
+      for (let key of possibleKeys) {
+        const cleanTarget = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const foundKey = itemKeys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanTarget);
+        if (foundKey && item[foundKey] !== undefined && item[foundKey] !== null && item[foundKey] !== '') {
+          return item[foundKey];
+        }
+      }
+      return '';
+    }
 
     function parseNumeric(val) {
       if (!val) return 0;
@@ -209,33 +458,42 @@
       return isNaN(parsed) ? 0 : parsed;
     }
 
-    // Fungsi Konversi Format Tanggal
-    function parseTargetDate(dateStr) {
+    function parseAnyDate(dateStr) {
       if (!dateStr || dateStr === '-') return null;
-      let d = new Date(dateStr);
-      if (!isNaN(d.getTime())) return d;
+      if (dateStr instanceof Date) return isNaN(dateStr.getTime()) ? null : dateStr;
+      if (typeof dateStr === 'number') return new Date(dateStr);
 
-      const str = String(dateStr).trim();
-      if (str.includes('/')) {
-        const parts = str.split(',');
-        const dateParts = parts[0].trim().split('/');
-        if (dateParts.length === 3) {
-          const day = parseInt(dateParts[0], 10);
-          const month = parseInt(dateParts[1], 10) - 1;
-          const year = parseInt(dateParts[2], 10);
-          let timeStr = parts[1] ? parts[1].trim().replace('.', ':') : '00:00';
-          const timeParts = timeStr.split(':');
-          d = new Date(year, month, day, parseInt(timeParts[0] || 0, 10), parseInt(timeParts[1] || 0, 10));
-          if (!isNaN(d.getTime())) return d;
-        }
+      let str = String(dateStr).trim();
+      if (/^\d{10,}$/.test(str)) return new Date(parseInt(str, 10));
+
+      const ddmmyyyyMatch = str.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})(?:[,\s]+(\d{1,2})[\:\.](\d{1,2})(?:[\:\.](\d{1,2}))?)?/);
+      if (ddmmyyyyMatch) {
+        const day = parseInt(ddmmyyyyMatch[1], 10);
+        const month = parseInt(ddmmyyyyMatch[2], 10) - 1;
+        const year = parseInt(ddmmyyyyMatch[3], 10);
+        const hour = parseInt(ddmmyyyyMatch[4] || 0, 10);
+        const minute = parseInt(ddmmyyyyMatch[5] || 0, 10);
+        const second = parseInt(ddmmyyyyMatch[6] || 0, 10);
+        const d = new Date(year, month, day, hour, minute, second);
+        if (!isNaN(d.getTime())) return d;
       }
+
+      const d = new Date(str.includes(' ') && !str.includes('T') ? str.replace(' ', 'T') : str);
+      if (!isNaN(d.getTime())) return d;
       return null;
     }
 
-    // Fungsi Membuat Badge Hitung Mundur Sisa Hari
+    function parseTargetDate(dateStr) {
+      return parseAnyDate(dateStr);
+    }
+
     function getDeadlineBadgeHtml(targetStr, status) {
-      if (String(status).trim() === 'Selesai') {
+      const statusVal = String(status || '').trim().toLowerCase();
+      if (statusVal === 'selesai') {
         return `<span class="text-[10px] px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold">✅ Selesai</span>`;
+      }
+      if (statusVal === 'cancel' || statusVal === 'batal') {
+        return `<span class="text-[10px] px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 border border-rose-300 font-bold">❌ Cancel</span>`;
       }
 
       const targetDateObj = parseTargetDate(targetStr);
@@ -257,10 +515,21 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       const savedTech = localStorage.getItem('activeTeknisi') || 'Adib';
-      document.getElementById('techSelect').value = savedTech;
+      const techSelect = document.getElementById('techSelect');
+      if (techSelect) techSelect.value = savedTech;
+
+      try {
+        allSpkData = JSON.parse(localStorage.getItem('spkData')) || [];
+      } catch (e) {
+        allSpkData = [];
+      }
+
+      updateDailySummary();
+      renderPendingQueue();
+      updateManifestBadge();
+
       loadDatabase();
 
-      // Poll real-time database setiap 3 detik
       setInterval(() => {
         loadDatabase();
       }, 3000);
@@ -269,55 +538,138 @@
     function changeTechnician() {
       const selectedTech = document.getElementById('techSelect').value;
       localStorage.setItem('activeTeknisi', selectedTech);
-      resetResetButtonState();
+      resetResetDailyState();
+      resetResetMonthlyState();
 
-      // Tutup form editor SPK yang terbuka & reset input manual
       currentActiveSpk = null;
       document.getElementById('technicianCard').classList.add('hidden');
       document.getElementById('manualSpkInput').value = '';
 
       updateDailySummary();
       renderPendingQueue();
+      updateManifestBadge();
     }
 
-    function handleResetClick() {
+    function handleResetDaily() {
       const btn = document.getElementById('btnResetDaily');
       const currentTech = document.getElementById('techSelect').value;
 
-      if (!resetConfirmState) {
-        resetConfirmState = true;
-        btn.innerText = '⚠️ Yakin Reset?';
-        btn.className = 'bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-[10px] px-2 py-0.5 rounded-lg transition animate-pulse shadow-sm';
+      if (!resetDailyState) {
+        resetDailyState = true;
+        btn.innerText = '⚠️ Yakin?';
+        btn.className = 'bg-rose-600 text-white text-[9px] px-1.5 py-0.5 rounded-md font-extrabold animate-pulse shadow-sm';
         
-        resetTimeout = setTimeout(() => {
-          resetResetButtonState();
+        resetDailyTimeout = setTimeout(() => {
+          resetResetDailyState();
         }, 3000);
       } else {
-        clearTimeout(resetTimeout);
-        resetResetButtonState();
+        clearTimeout(resetDailyTimeout);
+        resetResetDailyState();
         
         const todayKey = new Date().toISOString().slice(0, 10);
-        localStorage.setItem(`resetDate_${currentTech}_${todayKey}`, Date.now().toString());
+        localStorage.setItem(`resetDaily_${currentTech}_${todayKey}`, Date.now().toString());
         updateDailySummary();
       }
     }
 
-    function resetResetButtonState() {
-      resetConfirmState = false;
+    function resetResetDailyState() {
+      resetDailyState = false;
       const btn = document.getElementById('btnResetDaily');
       if (btn) {
         btn.innerText = '🧹 Reset';
-        btn.className = 'bg-slate-200 hover:bg-slate-300 text-slate-700 hover:text-rose-700 border border-slate-300 text-[10px] px-2 py-0.5 rounded-lg transition font-bold';
+        btn.className = 'bg-slate-100 hover:bg-rose-100 text-slate-600 hover:text-rose-700 text-[9px] px-1.5 py-0.5 rounded-md border border-slate-200 font-bold transition';
+      }
+    }
+
+    function handleResetMonthly() {
+      const btn = document.getElementById('btnResetMonthly');
+      const currentTech = document.getElementById('techSelect').value;
+
+      if (!resetMonthlyState) {
+        resetMonthlyState = true;
+        btn.innerText = '⚠️ Yakin?';
+        btn.className = 'bg-rose-600 text-white text-[9px] px-1.5 py-0.5 rounded-md font-extrabold animate-pulse shadow-sm';
+        
+        resetMonthlyTimeout = setTimeout(() => {
+          resetResetMonthlyState();
+        }, 3000);
+      } else {
+        clearTimeout(resetMonthlyTimeout);
+        resetResetMonthlyState();
+        
+        const monthKey = new Date().toISOString().slice(0, 7);
+        localStorage.setItem(`resetMonthly_${currentTech}_${monthKey}`, Date.now().toString());
+        updateDailySummary();
+      }
+    }
+
+    function resetResetMonthlyState() {
+      resetMonthlyState = false;
+      const btn = document.getElementById('btnResetMonthly');
+      if (btn) {
+        btn.innerText = '🧹 Reset';
+        btn.className = 'bg-slate-100 hover:bg-rose-100 text-slate-600 hover:text-rose-700 text-[9px] px-1.5 py-0.5 rounded-md border border-slate-200 font-bold transition';
       }
     }
 
     async function loadDatabase() {
+      // BACA LOCAL STORAGE TERBARU TERLEBIH DAHULU
+      try {
+        const stored = JSON.parse(localStorage.getItem('spkData'));
+        if (Array.isArray(stored) && stored.length > 0) {
+          allSpkData = stored;
+        }
+      } catch(e) {}
+
       try {
         const noCacheUrl = SHEET_WEB_APP_URL + (SHEET_WEB_APP_URL.includes('?') ? '&' : '?') + '_nc=' + Date.now();
         const res = await fetch(noCacheUrl, { redirect: 'follow' });
         const data = await res.json();
+
         if (Array.isArray(data) && data.length > 0) {
-          allSpkData = data;
+          const mergedList = [...allSpkData];
+
+          data.forEach(cloudItem => {
+            const cloudId = String(getVal(cloudItem, 'id', 'ID', 'spkId') || '').toLowerCase().trim();
+            if (!cloudId) return;
+
+            const localIdx = mergedList.findIndex(x => String(getVal(x, 'id', 'ID', 'spkId') || '').toLowerCase().trim() === cloudId);
+
+            if (localIdx !== -1) {
+              const localItem = mergedList[localIdx];
+              const isRecentlyEditedLocally = (Date.now() - (localItem.lastLocalEdit || 0)) < 300000;
+
+              Object.keys(localItem).forEach(k => {
+                if (cloudItem[k] === undefined || cloudItem[k] === null || cloudItem[k] === '') {
+                  cloudItem[k] = localItem[k];
+                }
+              });
+
+              if (isRecentlyEditedLocally) {
+                cloudItem.status = localItem.status;
+                cloudItem.Status = localItem.status;
+                cloudItem.notes = localItem.notes;
+                cloudItem.rincianBiaya = localItem.rincianBiaya;
+                cloudItem.biaya = localItem.biaya;
+                cloudItem.teknisiName = localItem.teknisiName || localItem.teknisi;
+                cloudItem.updatedBy = localItem.updatedBy;
+                cloudItem.completedAt = localItem.completedAt;
+                cloudItem.completedAtTimestamp = localItem.completedAtTimestamp;
+                cloudItem['Tanggal Selesai'] = localItem['Tanggal Selesai'];
+                cloudItem.lastLocalEdit = localItem.lastLocalEdit;
+              }
+
+              if (localItem.serahTerimaTech) cloudItem.serahTerimaTech = localItem.serahTerimaTech;
+              if (localItem.serahTerimaDate) cloudItem.serahTerimaDate = localItem.serahTerimaDate;
+              if (localItem.serahTerima !== undefined) cloudItem.serahTerima = localItem.serahTerima;
+
+              mergedList[localIdx] = cloudItem;
+            } else {
+              mergedList.push(cloudItem);
+            }
+          });
+
+          allSpkData = mergedList;
           localStorage.setItem('spkData', JSON.stringify(allSpkData));
         }
       } catch (err) {
@@ -329,99 +681,500 @@
       }
       updateDailySummary();
       renderPendingQueue();
+      updateManifestBadge();
     }
 
     function isTechMatched(item, currentTech) {
-      const target = currentTech.toLowerCase();
-      const techName = String(item.teknisiName || '').toLowerCase();
-      const updatedBy = String(item.updatedBy || '').toLowerCase();
+      if (!item) return false;
+      const target = String(currentTech || '').toLowerCase().trim();
+      if (!target) return false;
+
+      const keysToCheck = [
+        'teknisiName', 'teknisi', 'Teknisi', 'Nama Teknisi', 
+        'serahTerimaTech', 'serahTerimaTeknisi', 'penerima', 'penerimaTeknisi', 
+        'updatedBy', 'Updated By', 'assignedTo'
+      ];
+
+      for (let key of keysToCheck) {
+        const val = String(item[key] || '').toLowerCase().trim();
+        if (val && (val.includes(target) || target.includes(val))) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    // MENGAMBIL DAFTAR SERAH TERIMA KHUSUS HARI INI SECARA PRESISI
+    function getManifestListForTech(currentTech) {
+      try {
+        const storedData = JSON.parse(localStorage.getItem('spkData'));
+        if (Array.isArray(storedData) && storedData.length > 0) {
+          allSpkData = storedData;
+        }
+      } catch(e) {}
+
+      if (!Array.isArray(allSpkData)) return [];
+
+      const today = new Date();
+
+      return allSpkData.filter(item => {
+        // 1. Cek apakah ada penerima / teknisi serah terima yang cocok
+        const stTech = getVal(item, 'serahTerimaTech', 'serahTerimaTeknisi', 'penerima');
+        const techMatched = isTechMatched(item, currentTech) || (stTech && isTechMatched({ teknisi: stTech }, currentTech));
+        if (!techMatched) return false;
+
+        // 2. Wajib secara eksplisit memiliki penanda Serah Terima (bukan SPK biasa)
+        const stDate = getVal(item, 'serahTerimaDate', 'tanggalSerahTerima', 'manifestDate');
+        const stFlag = getVal(item, 'serahTerima', 'isSerahTerima', 'statusSerahTerima');
+
+        let hasManifest = false;
+
+        if (stTech && isTechMatched({ teknisi: stTech }, currentTech)) {
+          hasManifest = true;
+        } else if (stFlag && String(stFlag).toLowerCase() !== 'false' && String(stFlag) !== '0') {
+          hasManifest = true;
+        } else if (stDate && String(stDate).trim() !== '' && String(stDate) !== '-') {
+          hasManifest = true;
+        }
+
+        if (!hasManifest) return false;
+
+        // 3. Filter khusus hari ini
+        const dateStr = stDate || getVal(item, 'serahTerimaDate', 'tanggalSerahTerima');
+        if (dateStr) {
+          const parsedDate = parseAnyDate(dateStr);
+          if (parsedDate) {
+            return parsedDate.getDate() === today.getDate() &&
+                   parsedDate.getMonth() === today.getMonth() &&
+                   parsedDate.getFullYear() === today.getFullYear();
+          }
+        }
+        return true;
+      });
+    }
+
+    function updateManifestBadge() {
+      const techSelect = document.getElementById('techSelect');
+      const currentTech = techSelect ? techSelect.value : 'Adib';
+      const list = getManifestListForTech(currentTech);
       
-      if (techName.includes(target)) return true;
-      if (updatedBy.includes(target)) return true;
-      return false;
+      const badgeNav = document.getElementById('manifestBadgeCountNav');
+      if (badgeNav) {
+        badgeNav.innerText = `${list.length} Unit`;
+      }
+
+      if (list.length > lastHandoverCount && lastHandoverCount !== 0) {
+        showToastNotification(`Ada ${list.length} unit Surat Serah Terima baru untuk Teknisi ${currentTech}!`);
+      }
+      lastHandoverCount = list.length;
     }
 
-    function isCompletedToday(item) {
-      const now = new Date();
-      if (item.completedAtTimestamp) {
-        const d = new Date(item.completedAtTimestamp);
-        return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    function showToastNotification(message) {
+      playBeep();
+      const toast = document.getElementById('toastNotification');
+      const toastText = document.getElementById('toastText');
+      if (toastText) toastText.innerText = message;
+      if (toast) {
+        toast.classList.remove('hidden');
+        setTimeout(() => {
+          dismissToast();
+        }, 8000);
       }
-
-      const dateStr = item.completedAt || item.createdAt || '';
-      if (dateStr.includes('/')) {
-        const parts = dateStr.split(',')[0].trim().split('/');
-        if (parts.length === 3) {
-          const day = parseInt(parts[0], 10);
-          const month = parseInt(parts[1], 10) - 1;
-          const year = parseInt(parts[2], 10);
-          return day === now.getDate() && month === now.getMonth() && year === now.getFullYear();
-        }
-      }
-
-      const d = new Date(dateStr);
-      if (!isNaN(d.getTime())) {
-        return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-      }
-
-      return false;
     }
 
-    function isCompletedThisMonth(item) {
-      const now = new Date();
-      if (item.completedAtTimestamp) {
-        const d = new Date(item.completedAtTimestamp);
-        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-      }
-
-      const dateStr = item.completedAt || item.createdAt || '';
-      if (dateStr.includes('/')) {
-        const parts = dateStr.split(',')[0].trim().split('/');
-        if (parts.length === 3) {
-          const month = parseInt(parts[1], 10) - 1;
-          const year = parseInt(parts[2], 10);
-          return month === now.getMonth() && year === now.getFullYear();
-        }
-      }
-
-      const d = new Date(dateStr);
-      if (!isNaN(d.getTime())) {
-        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-      }
-
-      return false;
+    function dismissToast() {
+      const toast = document.getElementById('toastNotification');
+      if (toast) toast.classList.add('hidden');
     }
 
-    function updateDailySummary() {
+    function openManifestModal() {
       const currentTech = document.getElementById('techSelect').value;
-      document.getElementById('techNameSummary').innerText = currentTech;
+      document.getElementById('manifestModalTech').innerText = `Teknisi ${currentTech}`;
+
+      const list = getManifestListForTech(currentTech);
+      const container = document.getElementById('manifestModalContent');
+      container.innerHTML = '';
+
+      if (list.length === 0) {
+        container.innerHTML = `<div class="p-6 text-center text-slate-400 italic">Belum ada Surat Serah Terima Softcopy diserahkan hari ini untuk Teknisi ${currentTech}.</div>`;
+      } else {
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'bg-slate-50 p-3 rounded-xl border border-slate-200 text-center space-y-1';
+        headerDiv.innerHTML = `
+          <h4 class="font-black text-slate-900 text-sm">SERVICE KAMERA BOGOR</h4>
+          <p class="text-[10px] text-amber-800 font-extrabold uppercase">SURAT SERAH TERIMA BARANG (MANIFEST HARI INI)</p>
+          <p class="text-[10px] text-slate-500 font-bold">Total Unit Diserahkan: ${list.length} Unit</p>
+        `;
+        container.appendChild(headerDiv);
+
+        list.forEach((item, index) => {
+          const spkId = getVal(item, 'id', 'ID', 'spkId');
+          const customer = getVal(item, 'name', 'Nama', 'Nama Pelanggan', 'pemilik', 'Pemilik') || '-';
+          const barang = `${getVal(item, 'type', 'Tipe', 'Kategori')} ${getVal(item, 'model', 'Model', 'Tipe Unit')}`.trim();
+          const sn = getVal(item, 'sn', 'SN', 'Serial Number', 'serialNumber') || 'N/A';
+          const keluhan = getVal(item, 'issue', 'Keluhan', 'Kerusakan') || '-';
+          const kelengkapan = getVal(item, 'kelengkapan', 'Kelengkapan Unit', 'Kelengkapan') || 'Unit Only';
+
+          const card = document.createElement('div');
+          card.className = 'bg-white p-3 rounded-xl border border-slate-200 space-y-1.5 shadow-sm';
+          card.innerHTML = `
+            <div class="flex justify-between items-center border-b border-slate-100 pb-1">
+              <span class="font-black text-amber-900 bg-amber-300 px-2 py-0.5 rounded text-[11px] border border-amber-400">#${index+1} ${spkId}</span>
+              <span class="text-[10px] font-mono text-slate-500">SN: ${sn}</span>
+            </div>
+            <p class="font-extrabold text-slate-900 text-xs">${barang}</p>
+            <p class="text-[10px] text-slate-600 font-medium">Customer: <b>${customer}</b></p>
+            <p class="text-[10px] text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded border border-rose-200">Keluhan: ${keluhan}</p>
+            <p class="text-[10px] text-slate-500 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">Kelengkapan: ${kelengkapan}</p>
+          `;
+          container.appendChild(card);
+        });
+      }
+
+      const modal = document.getElementById('manifestModal');
+      const modalCard = document.getElementById('manifestModalCard');
       
-      const todayKey = new Date().toISOString().slice(0, 10);
-      const resetTime = parseInt(localStorage.getItem(`resetDate_${currentTech}_${todayKey}`) || '0', 10);
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        modalCard.classList.remove('scale-95');
+        modalCard.classList.add('scale-100');
+      }, 10);
+    }
+
+    function printManifestPDF() {
+      const currentTech = document.getElementById('techSelect').value;
+      const list = getManifestListForTech(currentTech);
+
+      if (list.length === 0) {
+        alert("Tidak ada data Surat Serah Terima hari ini untuk dicetak.");
+        return;
+      }
+
+      const oldTitle = document.title;
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+      document.title = `Surat_Serah_Terima_${currentTech}_${now.toISOString().slice(0,10)}`;
+
+      let rowsHtml = '';
+      list.forEach((item, index) => {
+        const spkId = getVal(item, 'id', 'ID', 'spkId') || '-';
+        const customer = getVal(item, 'name', 'Nama', 'Nama Pelanggan', 'pemilik', 'Pemilik') || '-';
+        const barang = `${getVal(item, 'type', 'Tipe', 'Kategori')} ${getVal(item, 'model', 'Model', 'Tipe Unit')}`.trim();
+        const sn = getVal(item, 'sn', 'SN', 'Serial Number', 'serialNumber') || 'N/A';
+        const keluhan = getVal(item, 'issue', 'Keluhan', 'Kerusakan') || '-';
+        const kelengkapan = getVal(item, 'kelengkapan', 'Kelengkapan Unit', 'Kelengkapan') || 'Unit Only';
+
+        rowsHtml += `
+          <tr style="border-bottom: 1px solid #ddd;">
+            <td style="padding: 6px; text-align: center; font-weight: bold;">${index + 1}</td>
+            <td style="padding: 6px; font-weight: bold;">${spkId}</td>
+            <td style="padding: 6px; font-weight: bold;">${customer}</td>
+            <td style="padding: 6px; font-weight: bold;">${barang}</td>
+            <td style="padding: 6px; font-family: monospace;">${sn}</td>
+            <td style="padding: 6px; color: #b91c1c; font-weight: bold;">${keluhan}</td>
+            <td style="padding: 6px;">${kelengkapan}</td>
+          </tr>
+        `;
+      });
+
+      document.getElementById('printableArea').innerHTML = `
+        <div style="font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; color: #000; line-height: 1.35; padding: 10px;">
+          <div style="border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <h2 style="margin: 0; font-size: 16pt; font-weight: bold; text-transform: uppercase;">SERVICE KAMERA BOGOR</h2>
+              <p style="margin: 2px 0 0 0; font-size: 9pt;">Ruko, Jl. Bumi Sentosa Raya No.7, Nanggewer Mekar, Kec. Cibinong, Kabupaten Bogor, Jawa Barat 16912</p>
+              <p style="margin: 0; font-size: 9pt;">Telp/WA: 0895-6000-70007</p>
+            </div>
+            <div style="text-align: right; font-size: 9pt; font-weight: bold;">
+              <h3 style="margin: 0; font-size: 12pt; text-transform: uppercase;">SURAT SERAH TERIMA BARANG</h3>
+              <p style="margin: 4px 0 0 0;">Tanggal: ${dateStr}</p>
+              <p style="margin: 0; color: #b91c1c;">Teknisi: Teknisi ${currentTech}</p>
+            </div>
+          </div>
+
+          <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt; margin-bottom: 15px; border: 1px solid #000;">
+            <thead>
+              <tr style="background: #f0f0f0; border-bottom: 2px solid #000; font-weight: bold; text-align: left;">
+                <th style="padding: 6px; text-align: center; width: 30px;">No</th>
+                <th style="padding: 6px;">No. SPK</th>
+                <th style="padding: 6px;">Customer</th>
+                <th style="padding: 6px;">Unit / Tipe Barang</th>
+                <th style="padding: 6px;">Serial Number (SN)</th>
+                <th style="padding: 6px;">Kerusakan / Keluhan</th>
+                <th style="padding: 6px;">Kelengkapan</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+
+          <div style="background: #f8fafc; border: 1px solid #000; padding: 8px; font-size: 9pt; font-weight: bold; margin-bottom: 30px;">
+            Total Unit Diserahkan Hari Ini: ${list.length} Unit
+          </div>
+
+          <table style="width: 100%; margin-top: 40px; border-collapse: collapse; font-size: 9pt; text-align: center; font-weight: bold;">
+            <tr>
+              <td style="width: 50%; vertical-align: top;">
+                <p style="margin: 0;">Yang Menyerahkan (Admin / Kasir),</p>
+                <div style="height: 50px;"></div>
+                <p style="margin: 0; color: #64748b;">( Nama & Tanda Tangan )</p>
+              </td>
+              <td style="width: 50%; vertical-align: top;">
+                <p style="margin: 0;">Yang Menerima (Teknisi),</p>
+                <div style="height: 50px;"></div>
+                <p style="margin: 0; font-weight: bold;">Teknisi ${currentTech}</p>
+              </td>
+            </tr>
+          </table>
+        </div>
+      `;
+
+      window.print();
+      setTimeout(() => { document.title = oldTitle; }, 1000);
+    }
+
+    function closeManifestModal() {
+      const modal = document.getElementById('manifestModal');
+      const modalCard = document.getElementById('manifestModalCard');
+      
+      modal.classList.add('opacity-0');
+      modalCard.classList.remove('scale-100');
+      modalCard.classList.add('scale-95');
+      
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 300);
+    }
+
+    // FITUR LAPORAN PENGHASILAN TEKNISI PER BULAN
+    function openIncomeModal() {
+      const currentTech = document.getElementById('techSelect').value;
+      document.getElementById('incomeModalTech').innerText = currentTech;
 
       try {
         allSpkData = JSON.parse(localStorage.getItem('spkData')) || [];
       } catch(e) {}
 
-      const completedToday = allSpkData.filter(item => {
-        const isSelesai = String(item.status || '').trim() === 'Selesai';
+      const monthMap = new Map();
+      const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+      const now = new Date();
+      const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      monthMap.set(currentMonthKey, `${monthNames[now.getMonth()]} ${now.getFullYear()}`);
+
+      allSpkData.forEach(item => {
+        if (isTechMatched(item, currentTech)) {
+          const statusVal = String(getVal(item, 'status', 'Status') || '').trim().toLowerCase();
+          if (statusVal === 'selesai') {
+            const rawDate = getVal(item, 'completedAtTimestamp') || getVal(item, 'completedAt') || getVal(item, 'updatedAt') || getVal(item, 'createdAt');
+            const dObj = parseAnyDate(rawDate) || new Date();
+            const key = `${dObj.getFullYear()}-${String(dObj.getMonth() + 1).padStart(2, '0')}`;
+            const label = `${monthNames[dObj.getMonth()]} ${dObj.getFullYear()}`;
+            monthMap.set(key, label);
+          }
+        }
+      });
+
+      const selectEl = document.getElementById('incomeMonthSelect');
+      selectEl.innerHTML = '';
+
+      const sortedKeys = Array.from(monthMap.keys()).sort().reverse();
+      sortedKeys.forEach(key => {
+        const opt = document.createElement('option');
+        opt.value = key;
+        opt.innerText = monthMap.get(key);
+        selectEl.appendChild(opt);
+      });
+
+      selectEl.value = currentMonthKey;
+      renderIncomeDetails();
+
+      const modal = document.getElementById('incomeModal');
+      const modalCard = document.getElementById('incomeModalCard');
+      
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        modalCard.classList.remove('scale-95');
+        modalCard.classList.add('scale-100');
+      }, 10);
+    }
+
+    function renderIncomeDetails() {
+      const currentTech = document.getElementById('techSelect').value;
+      const selectedMonthKey = document.getElementById('incomeMonthSelect').value;
+      const container = document.getElementById('incomeListContent');
+      container.innerHTML = '';
+
+      if (!selectedMonthKey) return;
+
+      const [targetYear, targetMonth] = selectedMonthKey.split('-').map(Number);
+
+      const completedInMonth = allSpkData.filter(item => {
+        const techMatch = isTechMatched(item, currentTech);
+        const statusVal = String(getVal(item, 'status', 'Status') || '').trim().toLowerCase();
+        if (!techMatch || statusVal !== 'selesai') return false;
+
+        const rawDate = getVal(item, 'completedAtTimestamp') || getVal(item, 'completedAt') || getVal(item, 'updatedAt') || getVal(item, 'createdAt');
+        const dObj = parseAnyDate(rawDate);
+        if (!dObj) return true;
+
+        return dObj.getFullYear() === targetYear && (dObj.getMonth() + 1) === targetMonth;
+      });
+
+      let grandTotalBiaya = 0;
+
+      if (completedInMonth.length === 0) {
+        container.innerHTML = `<div class="p-6 text-center text-slate-400 italic">Belum ada catatan penghasilan di bulan ini.</div>`;
+      } else {
+        completedInMonth.forEach(item => {
+          const spkId = getVal(item, 'id', 'ID');
+          const typeVal = getVal(item, 'type', 'Tipe') || 'Unit';
+          const modelVal = getVal(item, 'model', 'Model') || '-';
+          const nameVal = getVal(item, 'name', 'Nama', 'Nama Pelanggan', 'pemilik', 'Pemilik') || '-';
+          const rincianVal = getVal(item, 'rincianBiaya', 'Rincian') || 'Servis Selesai';
+          const biaya = parseNumeric(getVal(item, 'biaya', 'Biaya'));
+
+          grandTotalBiaya += biaya;
+
+          const rawDate = getVal(item, 'completedAt') || getVal(item, 'createdAt');
+          const dObj = parseAnyDate(rawDate) || new Date();
+          const dateTxt = dObj.toLocaleDateString('id-ID');
+
+          const div = document.createElement('div');
+          div.className = 'flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200 hover:border-amber-400 transition shadow-sm';
+          div.innerHTML = `
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="font-black text-slate-900">${spkId}</span>
+                <span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 border border-amber-300 font-bold">${typeVal}</span>
+              </div>
+              <p class="text-[11px] font-bold text-slate-900 mt-0.5">${modelVal}</p>
+              <p class="text-[10px] text-slate-600 font-medium">Pemilik: <b>${nameVal}</b></p>
+              <p class="text-[9px] text-slate-500">${rincianVal} • ${dateTxt}</p>
+            </div>
+            <div class="text-right">
+              <span class="text-xs font-black text-slate-950 block">Rp ${biaya.toLocaleString('id-ID')}</span>
+            </div>
+          `;
+          container.appendChild(div);
+        });
+      }
+
+      document.getElementById('incomeGrandTotal').innerText = `Rp ${grandTotalBiaya.toLocaleString('id-ID')}`;
+      document.getElementById('incomeUnitCount').innerText = `${completedInMonth.length} Unit`;
+    }
+
+    function closeIncomeModal() {
+      const modal = document.getElementById('incomeModal');
+      const modalCard = document.getElementById('incomeModalCard');
+      
+      modal.classList.add('opacity-0');
+      modalCard.classList.remove('scale-100');
+      modalCard.classList.add('scale-95');
+      
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 300);
+    }
+
+    function isCompletedThisMonth(item) {
+      if (!item) return false;
+      const statusVal = String(getVal(item, 'status', 'Status') || '').trim().toLowerCase();
+      if (statusVal !== 'selesai') return false;
+
+      const rawDate = getVal(item, 'completedAtTimestamp') || 
+                      getVal(item, 'completedAt', 'Tanggal Selesai', 'completed_at') || 
+                      getVal(item, 'updatedAt', 'Tanggal Update') || 
+                      getVal(item, 'createdAt', 'Tanggal Buat', 'Tanggal SPK', 'Tanggal');
+
+      if (!rawDate) return true;
+
+      const parsed = parseAnyDate(rawDate);
+      if (!parsed || isNaN(parsed.getTime())) return true;
+
+      const now = new Date();
+      return parsed.getMonth() === now.getMonth() && parsed.getFullYear() === now.getFullYear();
+    }
+
+    function isCompletedToday(item) {
+      if (!item) return false;
+      const statusVal = String(getVal(item, 'status', 'Status') || '').trim().toLowerCase();
+      if (statusVal !== 'selesai') return false;
+
+      const now = new Date();
+
+      if (item.completedAtTimestamp) {
+        const d = new Date(Number(item.completedAtTimestamp));
+        return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      }
+
+      if (item.lastLocalEdit) {
+        const d = new Date(Number(item.lastLocalEdit));
+        return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      }
+
+      const compAt = getVal(item, 'completedAt', 'Tanggal Selesai', 'completed_at');
+      if (compAt) {
+        const parsed = parseAnyDate(compAt);
+        if (parsed) {
+          return parsed.getDate() === now.getDate() && parsed.getMonth() === now.getMonth() && parsed.getFullYear() === now.getFullYear();
+        }
+      }
+
+      return false;
+    }
+
+    function getCompletedMonthlyList(currentTech) {
+      try {
+        allSpkData = JSON.parse(localStorage.getItem('spkData')) || [];
+      } catch(e) {}
+
+      return allSpkData.filter(item => {
+        const techMatch = isTechMatched(item, currentTech);
+        const dateMatch = isCompletedThisMonth(item);
+        return techMatch && dateMatch;
+      });
+    }
+
+    function getCompletedTodayList(currentTech) {
+      const todayKey = new Date().toISOString().slice(0, 10);
+      const resetDailyTime = parseInt(localStorage.getItem(`resetDaily_${currentTech}_${todayKey}`) || '0', 10);
+
+      try {
+        allSpkData = JSON.parse(localStorage.getItem('spkData')) || [];
+      } catch(e) {}
+
+      return allSpkData.filter(item => {
         const techMatch = isTechMatched(item, currentTech);
         const dateMatch = isCompletedToday(item);
 
-        const itemTime = item.completedAtTimestamp || item.lastLocalEdit || 0;
-        const isAfterReset = resetTime === 0 || itemTime > resetTime;
+        let isAfterReset = true;
+        if (resetDailyTime > 0 && item.completedAtTimestamp) {
+          isAfterReset = Number(item.completedAtTimestamp) > resetDailyTime;
+        }
 
-        return isSelesai && techMatch && dateMatch && isAfterReset;
+        return techMatch && dateMatch && isAfterReset;
       });
+    }
 
-      const completedMonthly = allSpkData.filter(item => {
-        const isSelesai = String(item.status || '').trim() === 'Selesai';
-        const techMatch = isTechMatched(item, currentTech);
-        return isSelesai && techMatch && isCompletedThisMonth(item);
-      });
+    function updateDailySummary() {
+      const currentTech = document.getElementById('techSelect').value;
+      
+      const elSummaryName = document.getElementById('techNameSummary');
+      if (elSummaryName) elSummaryName.innerText = currentTech;
+
+      const completedToday = getCompletedTodayList(currentTech);
+      const completedMonthly = getCompletedMonthlyList(currentTech);
 
       document.getElementById('dailyCount').innerText = `${completedToday.length} Unit`;
-      document.getElementById('monthlyCount').innerText = `${completedMonthly.length} Unit`;
+      
+      const monthlyEl = document.getElementById('monthlyCount');
+      if (monthlyEl) {
+        monthlyEl.innerHTML = `<span>${completedMonthly.length} Unit</span><span class="text-[10px]">🔍</span>`;
+      }
 
       const listContainer = document.getElementById('dailyList');
       listContainer.innerHTML = '';
@@ -432,31 +1185,48 @@
       }
 
       completedToday.forEach(item => {
+        const idVal = getVal(item, 'id', 'ID');
+        const typeVal = getVal(item, 'type', 'Tipe', 'Kategori') || 'Unit';
+        const modelVal = getVal(item, 'model', 'Model', 'Tipe Unit') || '';
+        const rincianVal = getVal(item, 'rincianBiaya', 'Rincian', 'Catatan') || 'Selesai';
+
         const div = document.createElement('div');
         div.className = 'flex justify-between items-center bg-white px-2 py-1.5 rounded-lg border border-slate-200 text-xs shadow-sm';
         div.innerHTML = `
-          <span class="font-extrabold text-slate-900">${item.id}</span>
-          <span class="text-slate-800 truncate max-w-[180px] font-medium">${item.type || 'Unit'} ${item.model || ''}</span>
-          <span class="text-[9px] text-slate-500">${item.rincianBiaya || 'Selesai'}</span>
+          <span class="font-extrabold text-slate-900">${idVal}</span>
+          <span class="text-slate-800 truncate max-w-[180px] font-medium">${typeVal} ${modelVal}</span>
+          <span class="text-[9px] text-slate-500">${rincianVal}</span>
         `;
         listContainer.appendChild(div);
       });
     }
 
-    // RENDERING DAFTAR ANTRIAN MENUNGGU (LIVE QUEUE)
     function renderPendingQueue() {
       const currentTech = document.getElementById('techSelect').value;
-      document.getElementById('queueTechName').innerText = currentTech;
+      
+      const elQueueTechName = document.getElementById('queueTechName');
+      if (elQueueTechName) elQueueTechName.innerText = currentTech;
 
       try {
         allSpkData = JSON.parse(localStorage.getItem('spkData')) || [];
       } catch(e) {}
 
-      // Filter SPK yang diserahkan ke teknisi ini & BELUM SELESAI
+      const allowedStatuses = ['antrian pengecekan', 'diagnosa', 'pengerjaan'];
+
       const pendingQueue = allSpkData.filter(item => {
         const techMatch = isTechMatched(item, currentTech);
-        const isNotDone = String(item.status || '').trim() !== 'Selesai';
-        return techMatch && isNotDone;
+        const statusVal = String(getVal(item, 'status', 'Status') || '').trim().toLowerCase();
+        
+        const isInTechHands = allowedStatuses.includes(statusVal);
+        return techMatch && isInTechHands;
+      });
+
+      pendingQueue.sort((a, b) => {
+        const dateA = parseTargetDate(getVal(a, 'targetDate', 'Target Selesai'));
+        const dateB = parseTargetDate(getVal(b, 'targetDate', 'Target Selesai'));
+        const timeA = dateA ? dateA.getTime() : 9999999999999;
+        const timeB = dateB ? dateB.getTime() : 9999999999999;
+        return timeA - timeB;
       });
 
       document.getElementById('queueCountBadge').innerText = `${pendingQueue.length} Unit`;
@@ -470,36 +1240,43 @@
       }
 
       pendingQueue.forEach(item => {
+        const idVal = getVal(item, 'id', 'ID');
+        const statusVal = getVal(item, 'status', 'Status') || 'Antrian Pengecekan';
+        const typeVal = getVal(item, 'type', 'Tipe') || 'Unit';
+        const modelVal = getVal(item, 'model', 'Model') || '-';
+        const nameVal = getVal(item, 'name', 'Nama', 'Nama Pelanggan') || '-';
+        const issueVal = getVal(item, 'issue', 'Keluhan') || '-';
+        const targetVal = getVal(item, 'targetDate', 'Target');
+
         const card = document.createElement('div');
         card.onclick = () => {
-          findAndLoadSPK(item.id);
+          findAndLoadSPK(idVal);
           const targetEl = document.getElementById('technicianCard');
           if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth' });
         };
         card.className = 'bg-white hover:bg-amber-50/60 p-2.5 rounded-xl border border-slate-200 hover:border-amber-400 cursor-pointer transition shadow-sm space-y-1.5 group active:scale-95';
 
-        const deadlineBadge = getDeadlineBadgeHtml(item.targetDate, item.status);
-        const statusTxt = item.status || 'Diterima';
+        const deadlineBadge = getDeadlineBadgeHtml(targetVal, statusVal);
 
         card.innerHTML = `
           <div class="flex justify-between items-center">
             <div class="flex items-center gap-1.5">
-              <span class="font-black text-slate-900 bg-amber-300 px-2 py-0.5 rounded text-[11px] border border-amber-400">${item.id}</span>
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-300">${statusTxt}</span>
+              <span class="font-black text-slate-900 bg-amber-300 px-2 py-0.5 rounded text-[11px] border border-amber-400">${idVal}</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-300">${statusVal}</span>
             </div>
             ${deadlineBadge}
           </div>
           <div class="flex justify-between items-baseline pt-0.5">
             <div>
-              <p class="font-black text-slate-900 text-xs">${item.type || 'Unit'}: ${item.model || '-'}</p>
-              <p class="text-[10px] text-slate-500 font-medium">Pemilik: ${item.name || '-'}</p>
+              <p class="font-black text-slate-900 text-xs">${typeVal}: ${modelVal}</p>
+              <p class="text-[10px] text-slate-500 font-medium">Pemilik: ${nameVal}</p>
             </div>
             <span class="text-[10px] text-amber-800 group-hover:underline font-extrabold flex items-center gap-0.5">
               <span>Proses</span> ➔
             </span>
           </div>
           <p class="text-[10px] text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded border border-rose-200 truncate">
-            Keluhan: ${item.issue || '-'}
+            Keluhan: ${issueVal}
           </p>
         `;
 
@@ -511,15 +1288,7 @@
       const currentTech = document.getElementById('techSelect').value;
       document.getElementById('modalTechName').innerText = currentTech;
 
-      try {
-        allSpkData = JSON.parse(localStorage.getItem('spkData')) || [];
-      } catch(e) {}
-
-      const completedMonthly = allSpkData.filter(item => {
-        const isSelesai = String(item.status || '').trim() === 'Selesai';
-        const techMatch = isTechMatched(item, currentTech);
-        return isSelesai && techMatch && isCompletedThisMonth(item);
-      });
+      const completedMonthly = getCompletedMonthlyList(currentTech);
 
       const modalList = document.getElementById('monthlyModalList');
       modalList.innerHTML = '';
@@ -528,23 +1297,30 @@
         modalList.innerHTML = '<p class="text-slate-400 italic text-center py-6">Belum ada unit yang diselesaikan bulan ini.</p>';
       } else {
         completedMonthly.forEach(item => {
+          const idVal = getVal(item, 'id', 'ID');
+          const typeVal = getVal(item, 'type', 'Tipe') || 'Unit';
+          const modelVal = getVal(item, 'model', 'Model') || '-';
+          const rincianVal = getVal(item, 'rincianBiaya', 'Rincian') || 'Perbaikan Complete';
+          const totalCost = parseNumeric(getVal(item, 'biaya', 'Biaya'));
+
+          const rawDate = getVal(item, 'completedAt', 'Tanggal Selesai') || getVal(item, 'createdAt');
+          const dObj = parseAnyDate(rawDate) || new Date();
+          const dateTxt = dObj.toLocaleDateString('id-ID') + ', ' + String(dObj.getHours()).padStart(2, '0') + '.' + String(dObj.getMinutes()).padStart(2, '0');
+
           const div = document.createElement('div');
           div.className = 'flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200 hover:border-amber-300 transition shadow-sm';
-          
-          const dateTxt = item.completedAt || item.createdAt || '-';
-          const totalCost = parseNumeric(item.biaya);
 
           div.innerHTML = `
             <div>
               <div class="flex items-center gap-1.5">
-                <span class="font-black text-slate-900">${item.id}</span>
-                <span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 border border-amber-300 font-bold">${item.type || 'Unit'}</span>
+                <span class="font-black text-slate-900">${idVal}</span>
+                <span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 border border-amber-300 font-bold">${typeVal}</span>
               </div>
-              <p class="text-[11px] font-bold text-slate-900 mt-0.5">${item.model || '-'}</p>
+              <p class="text-[11px] font-bold text-slate-900 mt-0.5">${modelVal}</p>
               <p class="text-[9px] text-slate-500">🕒 Selesai: ${dateTxt}</p>
             </div>
             <div class="text-right">
-              <span class="text-[10px] font-semibold text-slate-700 block">${item.rincianBiaya || 'Perbaikan Complete'}</span>
+              <span class="text-[10px] font-semibold text-slate-700 block">${rincianVal}</span>
               <span class="text-[11px] font-black text-slate-950">Rp ${totalCost.toLocaleString('id-ID')}</span>
             </div>
           `;
@@ -649,85 +1425,135 @@
     }
 
     async function findAndLoadSPK(spkIdQuery) {
-      document.getElementById('loading').classList.remove('hidden');
-      document.getElementById('technicianCard').classList.add('hidden');
-
-      await loadDatabase();
-
-      await new Promise(r => setTimeout(r, 300));
-      document.getElementById('loading').classList.add('hidden');
-
-      const found = allSpkData.find(item => String(item.id || '').trim().toLowerCase() === spkIdQuery.toLowerCase());
+      const query = spkIdQuery.trim().toLowerCase();
+      
+      let found = allSpkData.find(item => String(getVal(item, 'id', 'ID') || '').trim().toLowerCase() === query);
 
       if (!found) {
-        alert(`Data SPK "${spkIdQuery}" tidak ditemukan di database!`);
+        document.getElementById('loading').classList.remove('hidden');
+        document.getElementById('technicianCard').classList.add('hidden');
+
+        await loadDatabase();
+
+        document.getElementById('loading').classList.add('hidden');
+        found = allSpkData.find(item => String(getVal(item, 'id', 'ID') || '').trim().toLowerCase() === query);
+      } else {
+        renderSPKCard(found);
+        loadDatabase().then(() => {
+          const fresh = allSpkData.find(item => String(getVal(item, 'id', 'ID') || '').trim().toLowerCase() === query);
+          if (fresh) renderSPKCard(fresh);
+        });
         return;
       }
 
+      if (!found) {
+        alert(`Data SPK "${spkIdQuery}" tidak ditemukan di Cloud Database!\nPastikan SPK sudah terbit dari Web Admin.`);
+        return;
+      }
+
+      renderSPKCard(found);
+    }
+
+    function renderSPKCard(found) {
       currentActiveSpk = found;
 
-      document.getElementById('tkSpkId').innerText = found.id;
-      document.getElementById('tkDelivery').innerText = found.deliveryType || 'Store';
-      document.getElementById('tkUnit').innerText = `${found.type || 'Unit'} - ${found.model || '-'}`;
-      document.getElementById('tkOwner').innerText = `Pemilik: ${found.name || '-'} (${found.phone || '-'})`;
-      document.getElementById('tkKondisi').innerText = `Kondisi Fisik: ${found.kondisi || '-'}`;
-      document.getElementById('tkIssue').innerText = found.issue || '-';
-      document.getElementById('tkStatusSelect').value = found.status || 'Diagnosa';
-      
-      // Hitung Sisa Hari & Pasang Badge Waktu Target
-      document.getElementById('tkDeadlineBadge').innerHTML = getDeadlineBadgeHtml(found.targetDate, found.status);
+      const idVal = getVal(found, 'id', 'ID');
+      const deliveryVal = getVal(found, 'deliveryType', 'Tipe Pengiriman') || 'Store';
+      const typeVal = getVal(found, 'type', 'Tipe') || 'Unit';
+      const modelVal = getVal(found, 'model', 'Model') || '-';
+      const nameVal = getVal(found, 'name', 'Nama') || '-';
+      const phoneVal = getVal(found, 'phone', 'No HP') || '-';
+      const kondisiVal = getVal(found, 'kondisi', 'Kondisi') || '-';
+      const issueVal = getVal(found, 'issue', 'Keluhan') || '-';
+      const statusVal = getVal(found, 'status', 'Status') || 'Antrian Pengecekan';
+      const targetVal = getVal(found, 'targetDate', 'Target');
+      const notesVal = getVal(found, 'notes', 'Catatan');
+      const rincianVal = getVal(found, 'rincianBiaya', 'Rincian');
+      const biayaVal = parseNumeric(getVal(found, 'biaya', 'Biaya'));
 
-      let notesText = String(found.notes || '').trim();
+      document.getElementById('tkSpkId').innerText = idVal;
+      document.getElementById('tkDelivery').innerText = deliveryVal;
+      document.getElementById('tkUnit').innerText = `${typeVal} - ${modelVal}`;
+      document.getElementById('tkOwner').innerText = `Pemilik: ${nameVal} (${phoneVal})`;
+      document.getElementById('tkKondisi').innerText = `Kondisi Fisik: ${kondisiVal}`;
+      document.getElementById('tkIssue').innerText = issueVal;
+      document.getElementById('tkStatusSelect').value = statusVal;
+      
+      document.getElementById('tkDeadlineBadge').innerHTML = getDeadlineBadgeHtml(targetVal, statusVal);
+
+      let notesText = String(notesVal || '').trim();
       if (!notesText || notesText.includes('/202') || notesText.includes('T')) {
         notesText = "Unit baru diterima di kasir toko.";
       }
       document.getElementById('tkNotesInput').value = notesText;
+      
+      document.getElementById('tkRincianInput').value = rincianVal || '';
+      document.getElementById('tkBiayaInput').value = biayaVal || '';
 
       document.getElementById('technicianCard').classList.remove('hidden');
     }
 
     async function saveTechnicianUpdate(e) {
-      e.preventDefault();
+      if (e) e.preventDefault();
       if (!currentActiveSpk) return;
+
+      const btnSave = document.getElementById('btnSaveSubmit');
+      const originalBtnHtml = btnSave.innerHTML;
+      btnSave.disabled = true;
+      btnSave.innerHTML = `<span>⏳ Menyimpan ke Cloud...</span>`;
 
       const currentTech = document.getElementById('techSelect').value;
       const newStatus = document.getElementById('tkStatusSelect').value;
       const newNotes = document.getElementById('tkNotesInput').value.trim();
+      const newRincian = document.getElementById('tkRincianInput').value.trim();
+      const newBiaya = parseNumeric(document.getElementById('tkBiayaInput').value);
 
-      const btnSave = document.getElementById('btnSaveSubmit');
-      const txtBtn = document.getElementById('txtBtnSave');
-      const loaderBtn = document.getElementById('loaderBtnSave');
+      const oldStatus = getVal(currentActiveSpk, 'status', 'Status');
 
-      btnSave.disabled = true;
-      txtBtn.classList.add('hidden');
-      loaderBtn.classList.remove('hidden');
+      if (oldStatus === 'Selesai' && newStatus !== 'Selesai') {
+        const confirmCancel = confirm(`⚠️ Unit ${getVal(currentActiveSpk, 'id', 'ID')} sebelumnya berstatus SELESAI.\n\nYakin ingin mengubah status menjadi "${newStatus}"?\nHitungan 'Selesai Hari Ini & Bulan Ini' akan OTOMATIS BERKURANG.`);
+        if (!confirmCancel) {
+          btnSave.disabled = false;
+          btnSave.innerHTML = originalBtnHtml;
+          return;
+        }
+      }
 
       currentActiveSpk.status = newStatus;
+      currentActiveSpk.Status = newStatus;
       currentActiveSpk.notes = newNotes;
+      currentActiveSpk.rincianBiaya = newRincian;
+      currentActiveSpk.biaya = newBiaya;
       currentActiveSpk.teknisiName = currentTech;
+      currentActiveSpk.Teknisi = currentTech;
       currentActiveSpk.updatedBy = `Teknisi (${currentTech})`;
       currentActiveSpk.hasUnreadUpdate = true;
       currentActiveSpk.lastLocalEdit = Date.now();
 
       if (newStatus === 'Selesai') {
-        currentActiveSpk.completedAtTimestamp = Date.now();
         const now = new Date();
-        currentActiveSpk.completedAt = now.toLocaleDateString('id-ID') + ', ' + now.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
-
-        if (!currentActiveSpk.biaya || currentActiveSpk.biaya === 0) {
-          const estDefault = currentActiveSpk.estimasiBiaya || 350000;
-          const inputBiaya = prompt(`[${currentTech}] Unit Selesai! Masukkan Total Biaya Service (Rp):`, estDefault);
-          if (inputBiaya !== null) {
-            currentActiveSpk.biaya = parseInt(inputBiaya) || 0;
-            currentActiveSpk.rincianBiaya = prompt("Rincian Pekerjaan / Sparepart:", "Jasa Service & Kalibrasi Unit") || "";
-          }
+        const dateStr = now.toLocaleDateString('id-ID') + ', ' + String(now.getHours()).padStart(2, '0') + '.' + String(now.getMinutes()).padStart(2, '0');
+        
+        currentActiveSpk.completedAtTimestamp = Date.now();
+        currentActiveSpk.completedAt = dateStr;
+        currentActiveSpk['Tanggal Selesai'] = dateStr;
+        
+        if (!currentActiveSpk.paymentStatus) {
           currentActiveSpk.paymentStatus = "Belum Lunas";
         }
+      } else {
+        delete currentActiveSpk.completedAtTimestamp;
+        delete currentActiveSpk.completedAt;
+        delete currentActiveSpk['Tanggal Selesai'];
+        currentActiveSpk.completedAtTimestamp = null;
+        currentActiveSpk.completedAt = '';
+        currentActiveSpk['Tanggal Selesai'] = '';
       }
 
       try {
         let localData = JSON.parse(localStorage.getItem('spkData')) || [];
-        const idx = localData.findIndex(item => String(item.id).toLowerCase() === String(currentActiveSpk.id).toLowerCase());
+        const activeId = getVal(currentActiveSpk, 'id', 'ID');
+        const idx = localData.findIndex(item => String(getVal(item, 'id', 'ID')).toLowerCase() === String(activeId).toLowerCase());
         if (idx !== -1) {
           localData[idx] = currentActiveSpk;
         } else {
@@ -737,29 +1563,35 @@
         allSpkData = localData;
       } catch(err) {}
 
-      try {
-        await fetch(SHEET_WEB_APP_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(currentActiveSpk)
-        });
-      } catch (err) {
-        console.warn("Gagal sync online, tersimpan lokal.");
-      }
-
-      await new Promise(r => setTimeout(r, 400));
-
-      btnSave.disabled = false;
-      txtBtn.classList.remove('hidden');
-      loaderBtn.classList.add('hidden');
-
       updateDailySummary();
       renderPendingQueue();
+      updateManifestBadge();
 
-      alert(`✅ Success! [${currentTech}] berhasil memperbarui SPK ${currentActiveSpk.id}.`);
+      const savedSpkId = getVal(currentActiveSpk, 'id', 'ID');
+
+      // PEMBATASAN SINKRONISASI CLOUD MAKSIMAL 3 DETIK
+      const cloudFetchPromise = fetch(SHEET_WEB_APP_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(currentActiveSpk)
+      });
+
+      const timeoutPromise = new Promise(resolve => setTimeout(resolve, 3000));
+
+      try {
+        await Promise.race([cloudFetchPromise, timeoutPromise]);
+      } catch (err) {
+        console.warn("Sync background timeout / error:", err);
+      }
+
+      btnSave.disabled = false;
+      btnSave.innerHTML = originalBtnHtml;
+
       document.getElementById('technicianCard').classList.add('hidden');
       document.getElementById('manualSpkInput').value = '';
+
+      alert(`✅ Success! [${currentTech}] berhasil memperbarui SPK ${savedSpkId} (${newStatus}).`);
     }
   </script>
 </body>

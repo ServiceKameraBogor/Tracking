@@ -59,11 +59,14 @@
         <button onclick="switchView('finance'); toggleSidebar();" id="navFinance" class="w-full text-left px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center gap-2.5 transition">
           <span>💰</span> Laporan Keuangan
         </button>
+        <button onclick="switchView('serahTerima'); toggleSidebar();" id="navSerahTerima" class="w-full text-left px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center gap-2.5 transition">
+          <span>📄</span> Surat Serah Terima
+        </button>
       </div>
     </div>
     
     <div class="border-t border-slate-200 pt-4 text-[10px] text-slate-400 text-center font-medium leading-relaxed">
-      Copyright Kevin Eleazar Chandra©<br>Beta Test Ver V1.1
+      Copyright Kevin Eleazar Chandra©<br>Build V1.1
     </div>
   </div>
 
@@ -309,6 +312,103 @@
       </div>
     </div>
 
+    <!-- VIEW 3: SURAT SERAH TERIMA BARANG -->
+    <div id="viewSerahTerima" class="hidden space-y-6">
+      <div class="border-b border-slate-200 pb-3 flex justify-between items-center">
+        <div>
+          <h2 class="font-black text-base text-slate-900">📄 Cetak & Kirim Surat Serah Terima Barang</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Ketik No. SPK (pisahkan dengan koma) lalu klik "Buat Surat Tampil".</p>
+        </div>
+        <button onclick="switchView('dashboard')" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold px-3 py-1.5 rounded-lg transition">
+          Kembali ke SPK
+        </button>
+      </div>
+
+      <!-- Control Panel Serah Terima -->
+      <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 shadow-sm">
+        <div class="flex flex-wrap gap-2 items-center">
+          <input type="text" id="inputSpkList" placeholder="Ketik SPK (misal: SPK-001, SPK-002)" class="flex-1 p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold uppercase tracking-wider outline-none focus:border-amber-400">
+          
+          <select id="selectTech" onchange="handleGenerateSerahTerima()" class="p-2.5 bg-amber-300 border border-amber-400 text-slate-950 font-black text-xs rounded-xl outline-none cursor-pointer">
+            <option value="Adib">👨‍🔧 Teknisi Adib</option>
+            <option value="Oky">👨‍🔧 Teknisi Oky</option>
+          </select>
+
+          <button onclick="handleGenerateSerahTerima()" class="bg-amber-400 hover:bg-amber-500 text-slate-950 text-xs font-extrabold px-4 py-2.5 rounded-xl transition shadow-sm">
+            Buat Surat Tampil
+          </button>
+
+          <button onclick="sendToTeknisi()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl transition shadow-sm flex items-center gap-1.5 active:scale-95">
+            <span>🚀 Kirim Ke Web Teknisi</span>
+          </button>
+
+          <button onclick="printSerahTerimaDoc()" class="bg-slate-900 hover:bg-slate-800 text-amber-400 text-xs font-black px-4 py-2.5 rounded-xl transition shadow flex items-center gap-1">
+            <span>🖨️ Cetak / Simpan PDF</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Preview Document Surat Serah Terima -->
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 space-y-6 text-slate-900 shadow-sm">
+        
+        <!-- HEADER DOKUMEN -->
+        <div class="border-b-2 border-slate-900 pb-3">
+          <div class="flex justify-between items-start">
+            <div>
+              <h2 class="text-xl font-black text-slate-900 tracking-tight">SERVICE KAMERA BOGOR</h2>
+            </div>
+            <div class="text-right text-xs font-bold space-y-0.5">
+              <p>Tanggal: <span id="docDate">-</span></p>
+              <p>Teknisi: <span id="docTech" class="text-rose-600">Teknisi Adib</span></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- TABEL DAFTAR SPK -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-[11px] text-left border-collapse">
+            <thead>
+              <tr class="border-b-2 border-slate-900 text-slate-900 font-black uppercase tracking-wider text-[10px]">
+                <th class="py-2 px-1 text-center w-8">No</th>
+                <th class="py-2 px-2">No. SPK</th>
+                <th class="py-2 px-2">Customer</th>
+                <th class="py-2 px-2">Unit / Tipe Barang</th>
+                <th class="py-2 px-2">Serial Number (SN)</th>
+                <th class="py-2 px-2">Kerusakan / Keluhan</th>
+                <th class="py-2 px-2">Estimasi Biaya</th>
+                <th class="py-2 px-2">Kelengkapan</th>
+              </tr>
+            </thead>
+            <tbody id="spkTableBody" class="divide-y divide-slate-200 font-medium">
+              <tr>
+                <td colspan="8" class="py-6 text-center text-rose-500 font-bold italic">
+                  Tidak ada daftar SPK yang ditampilkan. Ketik No. SPK lalu klik "Buat Surat Tampil".
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- TOTAL UNIT DISERAHKAN -->
+        <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs font-black">
+          Total Unit Diserahkan: <span id="totalUnitCount">0 Unit</span>
+        </div>
+
+        <!-- AREA TANDA TANGAN -->
+        <div class="pt-8 grid grid-cols-2 gap-8 text-center text-xs font-bold">
+          <div class="space-y-16">
+            <p>Yang Menyerahkan (Admin / Kasir),</p>
+            <p class="text-slate-500">( Nama & Tanda Tangan )</p>
+          </div>
+          <div class="space-y-16">
+            <p>Yang Menerima (Teknisi),</p>
+            <p id="signTechName" class="font-extrabold text-slate-900">Teknisi Adib</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
   </div>
 
   <div id="printableArea"></div>
@@ -321,6 +421,7 @@
     let currentFilter = 'all';
     let spkData = [];
     let lastRenderedSignature = '';
+    let currentLoadedSpks = [];
     
     try {
       spkData = JSON.parse(localStorage.getItem('spkData')) || [];
@@ -349,26 +450,322 @@
       }
     }
 
-    // FUNGSI PINDAH TAMPILAN VIEW (DASHBOARD VS KEUANGAN)
+    // FUNGSI PINDAH TAMPILAN VIEW (DASHBOARD VS KEUANGAN VS SERAH TERIMA)
     function switchView(viewName) {
       const dashboard = document.getElementById('viewDashboard');
       const finance = document.getElementById('viewFinance');
+      const serahTerima = document.getElementById('viewSerahTerima');
       const navDash = document.getElementById('navDashboard');
       const navFin = document.getElementById('navFinance');
+      const navSerah = document.getElementById('navSerahTerima');
 
       if (viewName === 'finance') {
         dashboard.classList.add('hidden');
+        serahTerima.classList.add('hidden');
         finance.classList.remove('hidden');
         navFin.className = 'w-full text-left px-3.5 py-2.5 rounded-xl bg-amber-400 text-slate-950 flex items-center gap-2.5 shadow-sm transition';
         navDash.className = 'w-full text-left px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center gap-2.5 transition';
+        if (navSerah) navSerah.className = 'w-full text-left px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center gap-2.5 transition';
         renderFinanceData();
+      } else if (viewName === 'serahTerima') {
+        dashboard.classList.add('hidden');
+        finance.classList.add('hidden');
+        serahTerima.classList.remove('hidden');
+        if (navSerah) navSerah.className = 'w-full text-left px-3.5 py-2.5 rounded-xl bg-amber-400 text-slate-950 flex items-center gap-2.5 shadow-sm transition';
+        navDash.className = 'w-full text-left px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center gap-2.5 transition';
+        navFin.className = 'w-full text-left px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center gap-2.5 transition';
+        initSerahTerimaDateAndTech();
+        handleGenerateSerahTerima();
       } else {
         finance.classList.add('hidden');
+        serahTerima.classList.add('hidden');
         dashboard.classList.remove('hidden');
         navDash.className = 'w-full text-left px-3.5 py-2.5 rounded-xl bg-amber-400 text-slate-950 flex items-center gap-2.5 shadow-sm transition';
         navFin.className = 'w-full text-left px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center gap-2.5 transition';
+        if (navSerah) navSerah.className = 'w-full text-left px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center gap-2.5 transition';
         renderAdminList(true);
       }
+    }
+
+    // HELPER UNTUK MEMBACA FIELD APABILA ADANYA DIVERSIFIKASI PROPERTI
+    function getVal(item, ...possibleKeys) {
+      if (!item) return '';
+      for (let key of possibleKeys) {
+        if (item[key] !== undefined && item[key] !== null && item[key] !== '') {
+          return item[key];
+        }
+      }
+      const itemKeys = Object.keys(item);
+      for (let key of possibleKeys) {
+        const cleanTarget = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const foundKey = itemKeys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanTarget);
+        if (foundKey && item[foundKey] !== undefined && item[foundKey] !== null && item[foundKey] !== '') {
+          return item[foundKey];
+        }
+      }
+      return '';
+    }
+
+    function formatEstimasiBiaya(val) {
+      if (!val || val === '-' || val === 0 || val === '0') return '-';
+
+      if (typeof val === 'number') {
+        return 'Rp ' + val.toLocaleString('id-ID');
+      }
+
+      let str = String(val).trim();
+      if (!str || str === '-') return '-';
+
+      if (str.includes('-') || str.toLowerCase().includes('s/d')) {
+        const separator = str.includes('-') ? '-' : 's/d';
+        const parts = str.split(separator);
+        const formattedParts = parts.map(part => {
+          const cleaned = part.replace(/[^0-9]/g, '');
+          const num = parseInt(cleaned, 10);
+          return !isNaN(num) && num > 0 ? 'Rp ' + num.toLocaleString('id-ID') : part.trim();
+        });
+        return formattedParts.join(' - ');
+      }
+
+      const cleaned = str.replace(/[^0-9]/g, '');
+      const num = parseInt(cleaned, 10);
+      if (!isNaN(num) && num > 0) {
+        return 'Rp ' + num.toLocaleString('id-ID');
+      }
+
+      return str;
+    }
+
+    function initSerahTerimaDateAndTech() {
+      const today = new Date();
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      const docDateEl = document.getElementById('docDate');
+      if (docDateEl) docDateEl.innerText = today.toLocaleDateString('id-ID', options);
+
+      const techSelect = document.getElementById('selectTech');
+      const tech = techSelect ? techSelect.value : 'Adib';
+      const docTechEl = document.getElementById('docTech');
+      const signTechNameEl = document.getElementById('signTechName');
+      if (docTechEl) docTechEl.innerText = 'Teknisi ' + tech;
+      if (signTechNameEl) signTechNameEl.innerText = 'Teknisi ' + tech;
+    }
+
+    function handleGenerateSerahTerima() {
+      initSerahTerimaDateAndTech();
+      const inputEl = document.getElementById('inputSpkList');
+      if (!inputEl) return;
+      const input = inputEl.value.trim();
+      const tableBody = document.getElementById('spkTableBody');
+      const totalCountEl = document.getElementById('totalUnitCount');
+
+      if (!input) {
+        currentLoadedSpks = [];
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="8" class="py-6 text-center text-rose-500 font-bold italic">
+              Tidak ada daftar SPK yang ditampilkan. Ketik No. SPK lalu klik "Buat Surat Tampil".
+            </td>
+          </tr>`;
+        totalCountEl.innerText = '0 Unit';
+        return;
+      }
+
+      const spkKeys = input.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+      let matched = [];
+
+      spkKeys.forEach(key => {
+        const found = spkData.find(item => {
+          const id = String(getVal(item, 'id', 'ID', 'spkId')).toLowerCase();
+          return id === key;
+        });
+        if (found) {
+          matched.push(found);
+        } else {
+          matched.push({
+            id: key.toUpperCase(),
+            name: '-',
+            type: 'Unit',
+            model: '-',
+            sn: 'N/A',
+            issue: '-',
+            estimasiBiaya: '-',
+            kelengkapan: 'Unit Only'
+          });
+        }
+      });
+
+      currentLoadedSpks = matched;
+      tableBody.innerHTML = '';
+
+      matched.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 border-b border-slate-200';
+        
+        const spkId = getVal(item, 'id', 'ID') || '-';
+        const name = getVal(item, 'name', 'Nama', 'Nama Pelanggan') || '-';
+        const type = getVal(item, 'type', 'Tipe') || 'Unit';
+        const model = getVal(item, 'model', 'Model') || '-';
+        const sn = getVal(item, 'sn', 'SN', 'Serial Number') || 'N/A';
+        const issue = getVal(item, 'issue', 'Keluhan', 'Kerusakan') || '-';
+        const kelengkapan = getVal(item, 'kelengkapan', 'Kelengkapan') || 'Unit Only';
+
+        const rawEstimasi = getVal(item, 'estimasiBiaya', 'estimasi', 'Estimasi Biaya', 'biayaEstimasi', 'Biaya Estimasi');
+        const estimasiTxt = formatEstimasiBiaya(rawEstimasi);
+
+        tr.innerHTML = `
+          <td class="py-2.5 px-1 text-center font-bold">${index + 1}</td>
+          <td class="py-2.5 px-2 font-black text-amber-900">${spkId}</td>
+          <td class="py-2.5 px-2 font-bold">${name}</td>
+          <td class="py-2.5 px-2 font-bold">${type} ${model}</td>
+          <td class="py-2.5 px-2 font-mono text-[10px]">${sn}</td>
+          <td class="py-2.5 px-2 text-rose-700 font-bold">${issue}</td>
+          <td class="py-2.5 px-2 font-black text-slate-900">${estimasiTxt}</td>
+          <td class="py-2.5 px-2 text-slate-600">${kelengkapan}</td>
+        `;
+        tableBody.appendChild(tr);
+      });
+
+      totalCountEl.innerText = matched.length + ' Unit';
+    }
+
+    async function sendToTeknisi() {
+      if (!currentLoadedSpks || currentLoadedSpks.length === 0) {
+        alert("⚠️ Belum ada daftar SPK yang ditampilkan! Tampilkan SPK terlebih dahulu sebelum dikirim.");
+        return;
+      }
+
+      const currentTech = document.getElementById('selectTech').value;
+      const confirmSend = confirm(`🚀 Kirim Surat Serah Terima (${currentLoadedSpks.length} Unit) ke Portal Web Teknisi ${currentTech}?`);
+      if (!confirmSend) return;
+
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('id-ID') + ', ' + String(now.getHours()).padStart(2, '0') + '.' + String(now.getMinutes()).padStart(2, '0');
+
+      try {
+        currentLoadedSpks.forEach(loadedItem => {
+          const spkId = String(getVal(loadedItem, 'id', 'ID')).toLowerCase();
+          
+          loadedItem.serahTerimaTech = currentTech;
+          loadedItem.serahTerimaDate = dateStr;
+          loadedItem.teknisiName = currentTech;
+          loadedItem.Teknisi = currentTech;
+          loadedItem.lastLocalEdit = Date.now();
+
+          const idx = spkData.findIndex(i => String(getVal(i, 'id', 'ID')).toLowerCase() === spkId);
+          if (idx !== -1) {
+            spkData[idx] = { ...spkData[idx], ...loadedItem };
+          } else {
+            spkData.unshift(loadedItem);
+          }
+
+          syncToGoogleSheets(loadedItem);
+        });
+
+        saveData();
+        alert(`✅ Sukses! Surat Serah Terima ${currentLoadedSpks.length} unit telah berhasil dikirim ke Portal Teknisi ${currentTech}.`);
+      } catch (err) {
+        alert("Terjadi kesalahan saat mengirim data: " + err.message);
+      }
+    }
+
+    function printSerahTerimaDoc() {
+      if (!currentLoadedSpks || currentLoadedSpks.length === 0) {
+        alert("Pilih/tampilkan daftar SPK terlebih dahulu sebelum mencetak!");
+        return;
+      }
+
+      const oldTitle = document.title;
+      const tech = document.getElementById('selectTech').value;
+      document.title = `Surat_Serah_Terima_${tech}_${new Date().toISOString().slice(0,10)}`;
+
+      const logoHtml = logoData ? `<img src="${logoData}" style="max-height: 55px; max-width: 160px; object-fit: contain; margin-bottom: 5px;">` : '';
+      const today = new Date();
+      const dateTxt = today.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+
+      let rowsHtml = '';
+      currentLoadedSpks.forEach((item, index) => {
+        const spkId = getVal(item, 'id', 'ID') || '-';
+        const name = getVal(item, 'name', 'Nama', 'Nama Pelanggan') || '-';
+        const type = getVal(item, 'type', 'Tipe') || 'Unit';
+        const model = getVal(item, 'model', 'Model') || '-';
+        const sn = getVal(item, 'sn', 'SN', 'Serial Number') || 'N/A';
+        const issue = getVal(item, 'issue', 'Keluhan', 'Kerusakan') || '-';
+        const kelengkapan = getVal(item, 'kelengkapan', 'Kelengkapan') || 'Unit Only';
+
+        const rawEstimasi = getVal(item, 'estimasiBiaya', 'estimasi', 'Estimasi Biaya', 'biayaEstimasi', 'Biaya Estimasi');
+        const estimasiTxt = formatEstimasiBiaya(rawEstimasi);
+
+        rowsHtml += `
+          <tr style="border-bottom: 1px solid #ddd;">
+            <td style="padding: 6px; text-align: center; font-weight: bold;">${index + 1}</td>
+            <td style="padding: 6px; font-weight: bold;">${spkId}</td>
+            <td style="padding: 6px; font-weight: bold;">${name}</td>
+            <td style="padding: 6px; font-weight: bold;">${type} ${model}</td>
+            <td style="padding: 6px; font-family: monospace;">${sn}</td>
+            <td style="padding: 6px; color: #b91c1c; font-weight: bold;">${issue}</td>
+            <td style="padding: 6px; font-weight: bold;">${estimasiTxt}</td>
+            <td style="padding: 6px;">${kelengkapan}</td>
+          </tr>
+        `;
+      });
+
+      document.getElementById('printableArea').innerHTML = `
+        <div style="font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; color: #000; line-height: 1.35; padding: 10px;">
+          <div style="border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              ${logoHtml}
+              <h2 style="margin: 0; font-size: 16pt; font-weight: bold; text-transform: uppercase;">SERVICE KAMERA BOGOR</h2>
+              <p style="margin: 2px 0 0 0; font-size: 9pt;">Ruko, Jl. Bumi Sentosa Raya No.7, Nanggewer Mekar, Kec. Cibinong, Kabupaten Bogor, Jawa Barat 16912</p>
+              <p style="margin: 0; font-size: 9pt;">Telp/WA: 0895-6000-70007</p>
+            </div>
+            <div style="text-align: right; font-size: 9pt; font-weight: bold;">
+              <h3 style="margin: 0; font-size: 12pt; text-transform: uppercase;">SURAT SERAH TERIMA BARANG</h3>
+              <p style="margin: 4px 0 0 0;">Tanggal: ${dateTxt}</p>
+              <p style="margin: 0; color: #b91c1c;">Teknisi: Teknisi ${tech}</p>
+            </div>
+          </div>
+
+          <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt; margin-bottom: 15px; border: 1px solid #000;">
+            <thead>
+              <tr style="background: #f0f0f0; border-bottom: 2px solid #000; font-weight: bold; text-align: left;">
+                <th style="padding: 6px; text-align: center; width: 30px;">No</th>
+                <th style="padding: 6px;">No. SPK</th>
+                <th style="padding: 6px;">Customer</th>
+                <th style="padding: 6px;">Unit / Tipe Barang</th>
+                <th style="padding: 6px;">Serial Number (SN)</th>
+                <th style="padding: 6px;">Kerusakan / Keluhan</th>
+                <th style="padding: 6px;">Estimasi Biaya</th>
+                <th style="padding: 6px;">Kelengkapan</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+
+          <div style="background: #f8fafc; border: 1px solid #000; padding: 8px; font-size: 9pt; font-weight: bold; margin-bottom: 30px;">
+            Total Unit Diserahkan: ${currentLoadedSpks.length} Unit
+          </div>
+
+          <table style="width: 100%; margin-top: 40px; border-collapse: collapse; font-size: 9pt; text-align: center; font-weight: bold;">
+            <tr>
+              <td style="width: 50%; vertical-align: top;">
+                <p style="margin: 0;">Yang Menyerahkan (Admin / Kasir),</p>
+                <div style="height: 50px;"></div>
+                <p style="margin: 0; color: #64748b;">( Nama & Tanda Tangan )</p>
+              </td>
+              <td style="width: 50%; vertical-align: top;">
+                <p style="margin: 0;">Yang Menerima (Teknisi),</p>
+                <div style="height: 50px;"></div>
+                <p style="margin: 0; font-weight: bold;">Teknisi ${tech}</p>
+              </td>
+            </tr>
+          </table>
+        </div>
+      `;
+
+      window.print();
+      setTimeout(() => { document.title = oldTitle; }, 1000);
     }
 
     // FUNGSI RENDER DATA KEUANGAN

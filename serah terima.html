@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Surat Serah Terima Barang - Service Kamera Bogor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+      body { background-color: white !important; padding: 0 !important; margin: 0 !important; }
+      .print-card { box-shadow: none !important; border: none !important; padding: 0 !important; max-width: 100% !important; width: 100% !important; }
+      @page { margin: 1.2cm; size: portrait; }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 p-4 md:p-8 flex flex-col items-center">
+
+  <!-- PANEL KONTROL & FILTER (Sembunyi saat dicetak) -->
+  <div class="no-print w-full max-w-5xl bg-white p-4 rounded-2xl shadow-md border border-slate-200 mb-6 space-y-3">
+    <div class="flex flex-wrap gap-3 justify-between items-center border-b border-slate-100 pb-3">
+      <div>
+        <h1 class="text-sm font-black text-slate-900 flex items-center gap-2">
+          <span>📄 Cetak Surat Serah Terima Barang</span>
+        </h1>
+        <p class="text-xs text-slate-500">Ketik No. SPK (pisahkan dengan koma) lalu klik "Buat Surat Tampil".</p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="window.print()" class="bg-slate-900 hover:bg-slate-800 text-amber-400 text-xs font-black px-4 py-2 rounded-xl transition shadow flex items-center gap-1">
+          <span>🖨️ Cetak / Simpan PDF</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap gap-2 items-center">
+      <input type="text" id="inputSpkList" placeholder="Ketik SPK (misal: SPK-001, SPK-002)" class="flex-1 p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold uppercase tracking-wider outline-none focus:border-amber-400">
+      
+      <select id="selectTech" onchange="handleGenerate()" class="p-2.5 bg-amber-300 border border-amber-400 text-slate-950 font-black text-xs rounded-xl outline-none cursor-pointer">
+        <option value="Adib">👨‍🔧 Teknisi Adib</option>
+        <option value="Oky">👨‍🔧 Teknisi Oky</option>
+      </select>
+
+      <button onclick="handleGenerate()" class="bg-amber-400 hover:bg-amber-500 text-slate-950 text-xs font-extrabold px-4 py-2.5 rounded-xl transition shadow-sm">
+        Buat Surat Tampil
+      </button>
+
+      <!-- Tombol Kirim Ke Web Teknisi -->
+      <button onclick="sendToTeknisi()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl transition shadow-sm flex items-center gap-1.5 active:scale-95">
+        <span>🚀 Kirim Ke Web Teknisi</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- KERTAS SURAT SERAH TERIMA -->
+  <div class="print-card w-full max-w-5xl bg-white p-8 rounded-2xl shadow-xl border border-slate-200 space-y-6 text-slate-900">
+    
+    <!-- HEADER DOKUMEN -->
+    <div class="border-b-2 border-slate-900 pb-3">
+      <div class="flex justify-between items-start">
+        <div>
+          <h2 class="text-xl font-black text-slate-900 tracking-tight">SERVICE KAMERA BOGOR</h2>
+        </div>
+        <div class="text-right text-xs font-bold space-y-0.5">
+          <p>Tanggal: <span id="docDate">-</span></p>
+          <p>Teknisi: <span id="docTech" class="text-rose-600">Teknisi Adib</span></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABEL DAFTAR SPK -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-[11px] text-left border-collapse">
+        <thead>
+          <tr class="border-b-2 border-slate-900 text-slate-900 font-black uppercase tracking-wider text-[10px]">
+            <th class="py-2 px-1 text-center w-8">No</th>
+            <th class="py-2 px-2">No. SPK</th>
+            <th class="py-2 px-2">Customer</th>
+            <th class="py-2 px-2">Unit / Tipe Barang</th>
+            <th class="py-2 px-2">Serial Number (SN)</th>
+            <th class="py-2 px-2">Kerusakan / Keluhan</th>
+            <th class="py-2 px-2">Estimasi Biaya</th>
+            <th class="py-2 px-2">Kelengkapan</th>
+          </tr>
+        </thead>
+        <tbody id="spkTableBody" class="divide-y divide-slate-200 font-medium">
+          <tr>
+            <td colspan="8" class="py-6 text-center text-rose-500 font-bold italic">
+              Tidak ada daftar SPK yang ditampilkan. Ketik No. SPK lalu klik "Buat Surat Tampil".
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- TOTAL UNIT DISERAHKAN -->
+    <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs font-black">
+      Total Unit Diserahkan: <span id="totalUnitCount">0 Unit</span>
+    </div>
+
+    <!-- AREA TANDA TANGAN -->
+    <div class="pt-8 grid grid-cols-2 gap-8 text-center text-xs font-bold">
+      <div class="space-y-16">
+        <p>Yang Menyerahkan (Admin / Kasir),</p>
+        <p class="text-slate-500">( Nama & Tanda Tangan )</p>
+      </div>
+      <div class="space-y-16">
+        <p>Yang Menerima (Teknisi),</p>
+        <p id="signTechName" class="font-extrabold text-slate-900">Teknisi Adib</p>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyp0zx4Thgz1nh4r7OQAwUpE1izZ6gN3hdU85lMSk1vkW9EuKBBRmbGceKt4229e6yZ/exec";
+    let allSpkData = [];
+    let currentLoadedSpks = [];
+
+    function getVal(item, ...possibleKeys) {
+      if (!item) return '';
+      for (let key of possibleKeys) {
+        if (item[key] !== undefined && item[key] !== null && item[key] !== '') {
+          return item[key];
+        }
+      }
+      const itemKeys = Object.keys(item);
+      for (let key of possibleKeys) {
+        const cleanTarget = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const foundKey = itemKeys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanTarget);
+        if (foundKey && item[foundKey] !== undefined && item[foundKey] !== null && item[foundKey] !== '') {
+          return item[foundKey];
+        }
+      }
+      return '';
+    }
+
+    // PERBAIKAN FORMAT ESTIMASI BIAYA (MENANGANI RANGE ATAU TEKS BIAYA DENGAN SANGAT PRESISI)
+    function formatEstimasiBiaya(val) {
+      if (!val || val === '-' || val === 0 || val === '0') return '-';
+
+      if (typeof val === 'number') {
+        return 'Rp ' + val.toLocaleString('id-ID');
+      }
+
+      let str = String(val).trim();
+      if (!str || str === '-') return '-';
+
+      // Jika data estimasi berupa rentang/range (misal "250.000 - 350.000" atau "250000 - 350000")
+      if (str.includes('-') || str.toLowerCase().includes('s/d')) {
+        const separator = str.includes('-') ? '-' : 's/d';
+        const parts = str.split(separator);
+        const formattedParts = parts.map(part => {
+          const cleaned = part.replace(/[^0-9]/g, '');
+          const num = parseInt(cleaned, 10);
+          return !isNaN(num) && num > 0 ? 'Rp ' + num.toLocaleString('id-ID') : part.trim();
+        });
+        return formattedParts.join(' - ');
+      }
+
+      // Jika angka tunggal
+      const cleaned = str.replace(/[^0-9]/g, '');
+      const num = parseInt(cleaned, 10);
+      if (!isNaN(num) && num > 0) {
+        return 'Rp ' + num.toLocaleString('id-ID');
+      }
+
+      return str;
+    }
+
+    function initDateAndTech() {
+      const today = new Date();
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      document.getElementById('docDate').innerText = today.toLocaleDateString('id-ID', options);
+
+      const techSelect = document.getElementById('selectTech');
+      const tech = techSelect ? techSelect.value : 'Adib';
+      document.getElementById('docTech').innerText = 'Teknisi ' + tech;
+      document.getElementById('signTechName').innerText = 'Teknisi ' + tech;
+    }
+
+    async function syncDatabase() {
+      try {
+        allSpkData = JSON.parse(localStorage.getItem('spkData')) || [];
+      } catch(e) { allSpkData = []; }
+
+      try {
+        const res = await fetch(SHEET_WEB_APP_URL + '?_nc=' + Date.now());
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          allSpkData = data;
+          localStorage.setItem('spkData', JSON.stringify(allSpkData));
+        }
+      } catch(e) {}
+    }
+
+    function handleGenerate() {
+      initDateAndTech();
+      const input = document.getElementById('inputSpkList').value.trim();
+      const tableBody = document.getElementById('spkTableBody');
+      const totalCountEl = document.getElementById('totalUnitCount');
+
+      if (!input) {
+        currentLoadedSpks = [];
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="8" class="py-6 text-center text-rose-500 font-bold italic">
+              Tidak ada daftar SPK yang ditampilkan. Ketik No. SPK lalu klik "Buat Surat Tampil".
+            </td>
+          </tr>`;
+        totalCountEl.innerText = '0 Unit';
+        return;
+      }
+
+      try {
+        allSpkData = JSON.parse(localStorage.getItem('spkData')) || [];
+      } catch(e) { allSpkData = []; }
+
+      const spkKeys = input.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+      let matched = [];
+
+      spkKeys.forEach(key => {
+        const found = allSpkData.find(item => {
+          const id = String(getVal(item, 'id', 'ID', 'spkId')).toLowerCase();
+          return id === key;
+        });
+        if (found) {
+          matched.push(found);
+        } else {
+          matched.push({
+            id: key.toUpperCase(),
+            name: '-',
+            type: 'Unit',
+            model: '-',
+            sn: 'N/A',
+            issue: '-',
+            estimasiBiaya: '-',
+            kelengkapan: 'Unit Only'
+          });
+        }
+      });
+
+      currentLoadedSpks = matched;
+      tableBody.innerHTML = '';
+
+      matched.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 border-b border-slate-200';
+        
+        const spkId = getVal(item, 'id', 'ID') || '-';
+        const name = getVal(item, 'name', 'Nama', 'Nama Pelanggan') || '-';
+        const type = getVal(item, 'type', 'Tipe') || 'Unit';
+        const model = getVal(item, 'model', 'Model') || '-';
+        const sn = getVal(item, 'sn', 'SN', 'Serial Number') || 'N/A';
+        const issue = getVal(item, 'issue', 'Keluhan', 'Kerusakan') || '-';
+        const kelengkapan = getVal(item, 'kelengkapan', 'Kelengkapan') || 'Unit Only';
+
+        const rawEstimasi = getVal(item, 'estimasiBiaya', 'estimasi', 'Estimasi Biaya', 'biayaEstimasi', 'Biaya Estimasi');
+        const estimasiTxt = formatEstimasiBiaya(rawEstimasi);
+
+        tr.innerHTML = `
+          <td class="py-2.5 px-1 text-center font-bold">${index + 1}</td>
+          <td class="py-2.5 px-2 font-black text-amber-900">${spkId}</td>
+          <td class="py-2.5 px-2 font-bold">${name}</td>
+          <td class="py-2.5 px-2 font-bold">${type} ${model}</td>
+          <td class="py-2.5 px-2 font-mono text-[10px]">${sn}</td>
+          <td class="py-2.5 px-2 text-rose-700 font-bold">${issue}</td>
+          <td class="py-2.5 px-2 font-black text-slate-900">${estimasiTxt}</td>
+          <td class="py-2.5 px-2 text-slate-600">${kelengkapan}</td>
+        `;
+        tableBody.appendChild(tr);
+      });
+
+      totalCountEl.innerText = matched.length + ' Unit';
+    }
+
+    async function sendToTeknisi() {
+      if (!currentLoadedSpks || currentLoadedSpks.length === 0) {
+        alert("⚠️ Belum ada daftar SPK yang ditampilkan! Tampilkan SPK terlebih dahulu sebelum dikirim.");
+        return;
+      }
+
+      const currentTech = document.getElementById('selectTech').value;
+      const confirmSend = confirm(`🚀 Kirim Surat Serah Terima (${currentLoadedSpks.length} Unit) ke Portal Web Teknisi ${currentTech}?`);
+      if (!confirmSend) return;
+
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('id-ID') + ', ' + String(now.getHours()).padStart(2, '0') + '.' + String(now.getMinutes()).padStart(2, '0');
+
+      try {
+        let localData = JSON.parse(localStorage.getItem('spkData')) || [];
+
+        currentLoadedSpks.forEach(loadedItem => {
+          const spkId = String(getVal(loadedItem, 'id', 'ID')).toLowerCase();
+          
+          loadedItem.serahTerimaTech = currentTech;
+          loadedItem.serahTerimaDate = dateStr;
+          loadedItem.teknisiName = currentTech;
+          loadedItem.Teknisi = currentTech;
+          loadedItem.lastLocalEdit = Date.now();
+
+          const idx = localData.findIndex(i => String(getVal(i, 'id', 'ID')).toLowerCase() === spkId);
+          if (idx !== -1) {
+            localData[idx] = { ...localData[idx], ...loadedItem };
+          } else {
+            localData.unshift(loadedItem);
+          }
+
+          fetch(SHEET_WEB_APP_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(loadedItem)
+          }).catch(err => console.warn("Sync error:", err));
+        });
+
+        localStorage.setItem('spkData', JSON.stringify(localData));
+        alert(`✅ Sukses! Surat Serah Terima ${currentLoadedSpks.length} unit telah berhasil dikirim ke Portal Teknisi ${currentTech}.`);
+      } catch (err) {
+        alert("Terjadi kesalahan saat mengirim data: " + err.message);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      initDateAndTech();
+      
+      const urlParams = new URLSearchParams(window.location.search);
+      const spkParam = urlParams.get('spk') || urlParams.get('spks') || urlParams.get('ids');
+      const techParam = urlParams.get('tech') || urlParams.get('teknisi');
+
+      if (techParam) {
+        const techSelect = document.getElementById('selectTech');
+        if (techSelect) techSelect.value = techParam;
+      }
+
+      if (spkParam) {
+        document.getElementById('inputSpkList').value = spkParam;
+      }
+
+      await syncDatabase();
+      handleGenerate();
+    });
+  </script>
+</body>
+</html>
