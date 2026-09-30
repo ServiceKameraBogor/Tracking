@@ -433,6 +433,22 @@
     let counter = parseInt(localStorage.getItem('spkCounter')) || 1;
     let logoData = localStorage.getItem('companyLogo') || '';
 
+    // FUNGSI UNTUK MENGUBAH TANDA TANYA (?) MENJADI STRIP (-)
+    function cleanVal(val, fallback = '-') {
+      if (!val || String(val).trim() === '' || String(val).trim() === '?') return fallback;
+      return String(val).trim().replace(/\?/g, '-');
+    }
+
+    // HELPER MENGAMBIL LINK TRACKING ONLINE SECARA PRESISI
+    function getTrackingUrl(spkId) {
+      if (window.location.protocol === 'file:') {
+        return `https://servicekamerabogor.github.io/Tracking/index.html?spk=${spkId}`;
+      }
+      const path = window.location.pathname;
+      const basePath = path.substring(0, path.lastIndexOf('/'));
+      return `${window.location.origin}${basePath}/index.html?spk=${spkId}`;
+    }
+
     // FUNGSI TOGGLE SIDEBAR (GARIS 3)
     function toggleSidebar() {
       const sidebar = document.getElementById('sidebarMenu');
@@ -602,12 +618,12 @@
         tr.className = 'hover:bg-slate-50 border-b border-slate-200';
         
         const spkId = getVal(item, 'id', 'ID') || '-';
-        const name = getVal(item, 'name', 'Nama', 'Nama Pelanggan') || '-';
+        const name = cleanVal(getVal(item, 'name', 'Nama', 'Nama Pelanggan'), '-');
         const type = getVal(item, 'type', 'Tipe') || 'Unit';
         const model = getVal(item, 'model', 'Model') || '-';
-        const sn = getVal(item, 'sn', 'SN', 'Serial Number') || 'N/A';
-        const issue = getVal(item, 'issue', 'Keluhan', 'Kerusakan') || '-';
-        const kelengkapan = getVal(item, 'kelengkapan', 'Kelengkapan') || 'Unit Only';
+        const sn = cleanVal(getVal(item, 'sn', 'SN', 'Serial Number'), 'N/A');
+        const issue = cleanVal(getVal(item, 'issue', 'Keluhan', 'Kerusakan'), '-');
+        const kelengkapan = cleanVal(getVal(item, 'kelengkapan', 'Kelengkapan'), 'Unit Only');
 
         const rawEstimasi = getVal(item, 'estimasiBiaya', 'estimasi', 'Estimasi Biaya', 'biayaEstimasi', 'Biaya Estimasi');
         const estimasiTxt = formatEstimasiBiaya(rawEstimasi);
@@ -689,12 +705,12 @@
       let rowsHtml = '';
       currentLoadedSpks.forEach((item, index) => {
         const spkId = getVal(item, 'id', 'ID') || '-';
-        const name = getVal(item, 'name', 'Nama', 'Nama Pelanggan') || '-';
+        const name = cleanVal(getVal(item, 'name', 'Nama', 'Nama Pelanggan'), '-');
         const type = getVal(item, 'type', 'Tipe') || 'Unit';
         const model = getVal(item, 'model', 'Model') || '-';
-        const sn = getVal(item, 'sn', 'SN', 'Serial Number') || 'N/A';
-        const issue = getVal(item, 'issue', 'Keluhan', 'Kerusakan') || '-';
-        const kelengkapan = getVal(item, 'kelengkapan', 'Kelengkapan') || 'Unit Only';
+        const sn = cleanVal(getVal(item, 'sn', 'SN', 'Serial Number'), 'N/A');
+        const issue = cleanVal(getVal(item, 'issue', 'Keluhan', 'Kerusakan'), '-');
+        const kelengkapan = cleanVal(getVal(item, 'kelengkapan', 'Kelengkapan'), 'Unit Only');
 
         const rawEstimasi = getVal(item, 'estimasiBiaya', 'estimasi', 'Estimasi Biaya', 'biayaEstimasi', 'Biaya Estimasi');
         const estimasiTxt = formatEstimasiBiaya(rawEstimasi);
@@ -801,9 +817,9 @@
         row.className = 'hover:bg-slate-50 transition';
         row.innerHTML = `
           <td class="p-3 font-bold text-slate-900">${item.id}</td>
-          <td class="p-3 font-medium text-slate-800">${item.name || '-'}<br><span class="text-[10px] text-slate-400">${item.phone || '-'}</span></td>
-          <td class="p-3 text-slate-700">${item.type}: ${item.model}<br><span class="text-[10px] text-slate-400">S/N: ${item.sn || '-'}</span></td>
-          <td class="p-3 text-slate-600">${item.rincianBiaya || 'Jasa Service & Kalibrasi'}</td>
+          <td class="p-3 font-medium text-slate-800">${cleanVal(item.name, '-')}<br><span class="text-[10px] text-slate-400">${item.phone || '-'}</span></td>
+          <td class="p-3 text-slate-700">${item.type}: ${item.model}<br><span class="text-[10px] text-slate-400">S/N: ${cleanVal(item.sn, '-')}</span></td>
+          <td class="p-3 text-slate-600">${cleanVal(item.rincianBiaya, 'Jasa Service & Kalibrasi')}</td>
           <td class="p-3 text-right font-black text-emerald-800">Rp ${parseNumeric(item.biaya).toLocaleString('id-ID')}</td>
         `;
         tableBody.appendChild(row);
@@ -895,6 +911,13 @@
       }
       item.teknisiName = getResolvedTech(item);
       item.hasUnreadUpdate = isUpdateUnread(item);
+      
+      if (item.sn) item.sn = cleanVal(item.sn, '-');
+      if (item.kondisi) item.kondisi = cleanVal(item.kondisi, '-');
+      if (item.kelengkapan) item.kelengkapan = cleanVal(item.kelengkapan, '-');
+      if (item.issue) item.issue = cleanVal(item.issue, '-');
+      if (item.name) item.name = cleanVal(item.name, 'Pelanggan');
+
       return item;
     }
 
@@ -1112,14 +1135,14 @@
 
       const newSpk = {
         id: `SPK-00${counter++}`,
-        name: document.getElementById('inputName').value,
+        name: cleanVal(document.getElementById('inputName').value, 'Pelanggan'),
         phone: document.getElementById('inputPhone').value,
         type: document.getElementById('inputType').value,
         model: document.getElementById('inputModel').value,
-        sn: document.getElementById('inputSN').value || '-',
-        kondisi: document.getElementById('inputKondisi').value || 'Mulus / Sesuai Pemakaian',
-        kelengkapan: document.getElementById('inputKelengkapan').value || 'Unit Only',
-        issue: document.getElementById('inputIssue').value,
+        sn: cleanVal(document.getElementById('inputSN').value, '-'),
+        kondisi: cleanVal(document.getElementById('inputKondisi').value, 'Mulus / Sesuai Pemakaian'),
+        kelengkapan: cleanVal(document.getElementById('inputKelengkapan').value, 'Unit Only'),
+        issue: cleanVal(document.getElementById('inputIssue').value, '-'),
         deliveryType: deliveryVal,
         estimasiBiaya: estimasiText,
         teknisiName: chosenTech,
@@ -1164,16 +1187,20 @@
       let phone = (item.phone || '').replace(/[^0-9]/g, '');
       if (phone.startsWith('0')) phone = '62' + phone.slice(1);
 
-      const path = window.location.pathname;
-      const basePath = path.substring(0, path.lastIndexOf('/'));
-      const trackingUrl = `${window.location.origin}${basePath}/index.html?spk=${item.id}`;
+      const trackingUrl = getTrackingUrl(item.id);
       
       let metodeTxt = 'Datang Langsung ke Store';
       if (item.deliveryType === 'Ekspedisi') metodeTxt = 'Kiriman Ekspedisi / Kurir';
       if (item.deliveryType === 'Pedagang_Store') metodeTxt = 'Mitra / Pedagang (Datang ke Store)';
       if (item.deliveryType === 'Pedagang_Ekspedisi') metodeTxt = 'Mitra / Pedagang (Kiriman Ekspedisi)';
 
-      const text = `Halo Kak *${item.name}*,\n\nTerima kasih telah melakukan perbaikan unit di *Service Kamera Bogor*.\n\nBerikut *BUKTI TANDA TERIMA UNIT (SPK)* Anda:\n\n📋 *No. SPK:* ${item.id}\n📥 *Waktu Drop:* ${item.createdAt}\n🚚 *Metode Penerimaan:* ${metodeTxt}\n👨‍🔧 *Teknisi Penanggungjawab:* ${item.teknisiName || 'Adib'}\n📷 *Unit:* ${item.type} - ${item.model}\n🔢 *Serial Number (S/N):* ${item.sn || '-'}\n🔍 *Kondisi Fisik:* ${item.kondisi || '-'}\n📦 *Kelengkapan Unit:* ${item.kelengkapan || '-'}\n⚠️ *Keluhan:* ${item.issue}\n💰 *Estimasi Biaya:* ${item.estimasiBiaya || 'Menunggu Diagnosa'}\n\nLacak progress perbaikan unit Anda kapan saja via link berikut:\n${trackingUrl}`;
+      const nameTxt = cleanVal(item.name, 'Pelanggan');
+      const snTxt = cleanVal(item.sn, '-');
+      const kondisiTxt = cleanVal(item.kondisi, '-');
+      const kelengkapanTxt = cleanVal(item.kelengkapan, '-');
+      const issueTxt = cleanVal(item.issue, '-');
+
+      const text = `Halo Kak *${nameTxt}*,\n\nTerima kasih telah melakukan perbaikan unit di *Service Kamera Bogor*.\n\nBerikut *BUKTI TANDA TERIMA UNIT (SPK)* Anda:\n\n- *No. SPK:* ${item.id}\n- *Waktu Drop:* ${item.createdAt}\n- *Metode Penerimaan:* ${metodeTxt}\n- *Teknisi Penanggungjawab:* ${item.teknisiName || 'Adib'}\n- *Unit:* ${item.type} - ${item.model}\n- *Serial Number (S/N):* ${snTxt}\n- *Kondisi Fisik:* ${kondisiTxt}\n- *Kelengkapan Unit:* ${kelengkapanTxt}\n- *Keluhan:* ${issueTxt}\n- *Estimasi Biaya:* ${item.estimasiBiaya || 'Menunggu Diagnosa'}\n\nLacak progress perbaikan unit Anda kapan saja via link berikut:\n${trackingUrl}`;
 
       window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
     }
@@ -1185,12 +1212,14 @@
       let phone = (item.phone || '').replace(/[^0-9]/g, '');
       if (phone.startsWith('0')) phone = '62' + phone.slice(1);
 
-      const path = window.location.pathname;
-      const basePath = path.substring(0, path.lastIndexOf('/'));
-      const trackingUrl = `${window.location.origin}${basePath}/index.html?spk=${item.id}`;
+      const trackingUrl = getTrackingUrl(item.id);
       const nominal = parseNumeric(item.biaya) > 0 ? `Rp ${parseNumeric(item.biaya).toLocaleString('id-ID')}` : (item.estimasiBiaya || 'Menunggu Diagnosa');
 
-      const text = `Halo Kak *${item.name}*,\n\nIni adalah pengingat tagihan perbaikan unit Anda di *Service Kamera Bogor*.\n\nReceipt / TAGIHAN PEMBAYARAN SERVICE (BELUM LUNAS):\n📋 *No. SPK:* ${item.id}\n📷 *Unit:* ${item.type} - ${item.model} (S/N: ${item.sn || '-'})\n🛠️ *Rincian Pekerjaan:* ${item.rincianBiaya || 'Jasa Service & Kalibrasi Unit'}\n💰 *TOTAL BIAYA:* *${nominal}*\n\n💳 *REKENING PEMBAYARAN:*\nBank BRI: *720001006926530*\na/n *Muhamad Fauzi*\n\nMohon konfirmasi jika sudah transfer. Lacak detail nota & status perbaikan:\n${trackingUrl}`;
+      const nameTxt = cleanVal(item.name, 'Pelanggan');
+      const snTxt = cleanVal(item.sn, '-');
+      const rincianTxt = cleanVal(item.rincianBiaya, 'Jasa Service & Kalibrasi Unit');
+
+      const text = `Halo Kak *${nameTxt}*,\n\nIni adalah pengingat tagihan perbaikan unit Anda di *Service Kamera Bogor*.\n\nReceipt / TAGIHAN PEMBAYARAN SERVICE (BELUM LUNAS):\n- *No. SPK:* ${item.id}\n- *Unit:* ${item.type} - ${item.model} (S/N: ${snTxt})\n- *Rincian Pekerjaan:* ${rincianTxt}\n- *TOTAL BIAYA:* *${nominal}*\n\n- *REKENING PEMBAYARAN:*\nBank BRI: *720001006926530*\na/n *Muhamad Fauzi*\n\nMohon konfirmasi jika sudah transfer. Lacak detail nota & status perbaikan:\n${trackingUrl}`;
 
       window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
     }
@@ -1260,15 +1289,15 @@
       const newRincian = prompt("Edit Rincian Pekerjaan / Sparepart:", item.rincianBiaya || "");
 
       item.teknisiName = newTeknisi.trim() || item.teknisiName;
-      item.name = newName.trim() || item.name;
+      item.name = cleanVal(newName, 'Pelanggan');
       item.phone = newPhone.trim() || item.phone;
-      item.sn = newSN.trim() || item.sn;
-      item.kondisi = newKondisi.trim() || item.kondisi;
-      item.kelengkapan = newKelengkapan.trim() || item.kelengkapan;
-      item.issue = newIssue.trim() || item.issue;
-      item.estimasiBiaya = newEst.trim() || item.estimasiBiaya;
+      item.sn = cleanVal(newSN, '-');
+      item.kondisi = cleanVal(newKondisi, '-');
+      item.kelengkapan = cleanVal(newKelengkapan, '-');
+      item.issue = cleanVal(newIssue, '-');
+      item.estimasiBiaya = cleanVal(newEst, 'Menunggu Diagnosa');
       item.biaya = parseNumeric(newBiaya);
-      if (newRincian !== null) item.rincianBiaya = newRincian.trim();
+      if (newRincian !== null) item.rincianBiaya = cleanVal(newRincian, '');
 
       item.updatedBy = 'Admin';
       saveReadSignature(item.id, item.status, item.notes);
@@ -1339,7 +1368,7 @@
     function updateSN(spkId, newSN) {
       const item = getSpkById(spkId);
       if (item) {
-        item.sn = newSN;
+        item.sn = cleanVal(newSN, '-');
         item.updatedBy = 'Admin';
         saveReadSignature(item.id, item.status, item.notes);
         item.hasUnreadUpdate = false;
@@ -1353,7 +1382,7 @@
     function updateKelengkapan(spkId, newKel) {
       const item = getSpkById(spkId);
       if (item) {
-        item.kelengkapan = newKel;
+        item.kelengkapan = cleanVal(newKel, '-');
         item.updatedBy = 'Admin';
         saveReadSignature(item.id, item.status, item.notes);
         item.hasUnreadUpdate = false;
@@ -1367,7 +1396,7 @@
     function updateKondisi(spkId, newKondisi) {
       const item = getSpkById(spkId);
       if (item) {
-        item.kondisi = newKondisi;
+        item.kondisi = cleanVal(newKondisi, '-');
         item.updatedBy = 'Admin';
         saveReadSignature(item.id, item.status, item.notes);
         item.hasUnreadUpdate = false;
@@ -1381,7 +1410,7 @@
     function updateNotes(spkId, newNotes) {
       const item = getSpkById(spkId);
       if (item) {
-        item.notes = newNotes;
+        item.notes = cleanVal(newNotes, 'Unit baru diterima di kasir toko.');
         item.updatedBy = 'Admin';
         saveReadSignature(item.id, item.status, newNotes);
         item.hasUnreadUpdate = false;
@@ -1396,11 +1425,13 @@
       let phone = (item.phone || '').replace(/[^0-9]/g, '');
       if (phone.startsWith('0')) phone = '62' + phone.slice(1);
 
-      const path = window.location.pathname;
-      const basePath = path.substring(0, path.lastIndexOf('/'));
-      const trackingUrl = `${window.location.origin}${basePath}/index.html?spk=${item.id}`;
+      const trackingUrl = getTrackingUrl(item.id);
 
-      const text = `Halo Kak *${item.name}*,\n\nPerbaikan unit Kamera/Lensa Anda telah *SELESAI* dikerjakan dan siap diambil/dikirim.\n\nReceipt / INVOICE PEMBAYARAN SERVICE:\n📋 *No. SPK:* ${item.id}\n📷 *Unit:* ${item.type} - ${item.model} (S/N: ${item.sn || '-'})\n🛠️ *Rincian:* ${item.rincianBiaya || 'Jasa Service Complete'}\n💰 *TOTAL BIAYA:* *Rp ${parseNumeric(item.biaya).toLocaleString('id-ID')}*\n\n💳 *REKENING PEMBAYARAN:*\nBank BRI: *720001006926530*\na/n *Muhamad Fauzi*\n\nLacak detail nota & status perbaikan:\n${trackingUrl}`;
+      const nameTxt = cleanVal(item.name, 'Pelanggan');
+      const snTxt = cleanVal(item.sn, '-');
+      const rincianTxt = cleanVal(item.rincianBiaya, 'Jasa Service Complete');
+
+      const text = `Halo Kak *${nameTxt}*,\n\nPerbaikan unit Kamera/Lensa Anda telah *SELESAI* dikerjakan dan siap diambil/dikirim.\n\nReceipt / INVOICE PEMBAYARAN SERVICE:\n- *No. SPK:* ${item.id}\n- *Unit:* ${item.type} - ${item.model} (S/N: ${snTxt})\n- *Rincian:* ${rincianTxt}\n- *TOTAL BIAYA:* *Rp ${parseNumeric(item.biaya).toLocaleString('id-ID')}*\n\n- *REKENING PEMBAYARAN:*\nBank BRI: *720001006926530*\na/n *Muhamad Fauzi*\n\nLacak detail nota & status perbaikan:\n${trackingUrl}`;
 
       window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
     }
@@ -1546,17 +1577,16 @@
             : `<button onclick="togglePaymentStatus('${item.id}')" title="Klik untuk ubah status" class="text-[10px] px-2 py-0.5 rounded bg-rose-100 text-rose-800 border border-rose-300 font-extrabold transition">🔴 BELUM LUNAS</button>`;
         }
 
-        let notesVal = String(item.notes || '').trim();
-        if (!notesVal || notesVal.toLowerCase() === 'admin' || notesVal.toLowerCase() === 'teknisi' || notesVal.includes('/202') || notesVal.includes('-202') || notesVal.includes('T')) {
+        let notesVal = cleanVal(item.notes, "Unit baru diterima di kasir toko.");
+        if (notesVal.toLowerCase() === 'admin' || notesVal.toLowerCase() === 'teknisi' || notesVal.includes('/202') || notesVal.includes('-202') || notesVal.includes('T')) {
           notesVal = "Unit baru diterima di kasir toko.";
         }
 
-        let kondisiVal = String(item.kondisi || '').trim();
-        if (!kondisiVal) kondisiVal = "Mulus / Sesuai Pemakaian";
+        let kondisiVal = cleanVal(item.kondisi, "Mulus / Sesuai Pemakaian");
 
-        const snVal = String(item.sn || '-').trim();
-        const kelengkapanVal = String(item.kelengkapan || 'Unit Only').trim();
-        const issueVal = String(item.issue || '-').trim();
+        const snVal = cleanVal(item.sn, '-');
+        const kelengkapanVal = cleanVal(item.kelengkapan, 'Unit Only');
+        const issueVal = cleanVal(item.issue, '-');
         const biayaAkhirNum = parseNumeric(item.biaya);
         const rincianTxt = (item.rincianBiaya && !item.rincianBiaya.includes('T')) ? `(${item.rincianBiaya})` : '';
 
@@ -1584,7 +1614,7 @@
                 ${payBadge}
                 ${updateBadgeHtml}
               </div>
-              <span class="text-xs text-slate-800 font-bold block mt-1">${item.name} (${item.phone})</span>
+              <span class="text-xs text-slate-800 font-bold block mt-1">${cleanVal(item.name, 'Pelanggan')} (${item.phone})</span>
               <p class="text-[11px] text-slate-500 mt-0.5">📥 Drop: ${item.createdAt || '-'}</p>
             </div>
             <span class="text-[11px] px-2 py-1 rounded border ${deadline.color}">${deadline.text}</span>
@@ -1595,7 +1625,7 @@
             <p class="text-slate-700"><span class="text-slate-500 font-semibold">Kelengkapan:</span> <span class="text-slate-900 font-bold">${kelengkapanVal}</span></p>
             <p class="text-slate-700"><span class="text-slate-500 font-semibold">Kondisi Fisik:</span> <span class="text-slate-900">${kondisiVal}</span></p>
             <p class="text-rose-600"><span class="text-slate-500 font-semibold">Keluhan:</span> ${issueVal}</p>
-            <p class="text-slate-800 font-bold"><span class="text-slate-500 font-semibold">Estimasi Biaya:</span> ${item.estimasiBiaya || 'Menunggu Diagnosa'}</p>
+            <p class="text-slate-800 font-bold"><span class="text-slate-500 font-semibold">Estimasi Biaya:</span> ${cleanVal(item.estimasiBiaya, 'Menunggu Diagnosa')}</p>
             <p class="text-slate-950 font-black text-xs"><span class="text-slate-500 font-semibold">Total Biaya Akhir:</span> Rp ${biayaAkhirNum.toLocaleString('id-ID')} ${rincianTxt}</p>
           </div>
           
@@ -1698,20 +1728,20 @@
       let ttdPelangganHtml = `
         <p style="margin: 0;">Yang Menyerahkan (Pelanggan),</p>
         <div style="height: 45px;"></div>
-        <p style="margin: 0; font-weight: bold; text-decoration: underline;">(${item.name || 'Pelanggan'})</p>
+        <p style="margin: 0; font-weight: bold; text-decoration: underline;">(${cleanVal(item.name, 'Pelanggan')})</p>
       `;
 
       if (isEkspedisi) {
         ttdPelangganHtml = `
           <p style="margin: 0;">Pelanggan (Via Ekspedisi / Kurir),</p>
           <div style="height: 45px; display: flex; align-items: center; justify-content: center; font-style: italic; font-size: 8pt; color: #555;">[ Non-Tatap Muka / Digital ]</div>
-          <p style="margin: 0; font-weight: bold; text-decoration: underline;">(${item.name || 'Pelanggan'})</p>
+          <p style="margin: 0; font-weight: bold; text-decoration: underline;">(${cleanVal(item.name, 'Pelanggan')})</p>
         `;
       } else if (isPedagang) {
         ttdPelangganHtml = `
           <p style="margin: 0;">Mitra / Pedagang,</p>
           <div style="height: 45px;"></div>
-          <p style="margin: 0; font-weight: bold; text-decoration: underline;">(${item.name || 'Pelanggan'})</p>
+          <p style="margin: 0; font-weight: bold; text-decoration: underline;">(${cleanVal(item.name, 'Pelanggan')})</p>
         `;
       }
 
@@ -1748,7 +1778,7 @@
           <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt; border: 1px solid #000; margin-bottom: 10px;">
             <tr>
               <td style="padding: 5px 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #000; border-right: 1px solid #000; background: #f0f0f0;">Nama Pelanggan</td>
-              <td style="padding: 5px 7px; border-bottom: 1px solid #000;">${item.name || '-'}</td>
+              <td style="padding: 5px 7px; border-bottom: 1px solid #000;">${cleanVal(item.name, 'Pelanggan')}</td>
             </tr>
             <tr>
               <td style="padding: 5px 7px; font-weight: bold; border-bottom: 1px solid #000; border-right: 1px solid #000; background: #f0f0f0;">No. WhatsApp / HP</td>
@@ -1768,23 +1798,23 @@
             </tr>
             <tr>
               <td style="padding: 5px 7px; font-weight: bold; border-bottom: 1px solid #000; border-right: 1px solid #000; background: #f0f0f0;">Serial Number (S/N)</td>
-              <td style="padding: 5px 7px; border-bottom: 1px solid #000;"><strong>${item.sn || '-'}</strong></td>
+              <td style="padding: 5px 7px; border-bottom: 1px solid #000;"><strong>${cleanVal(item.sn, '-')}</strong></td>
             </tr>
             <tr>
               <td style="padding: 5px 7px; font-weight: bold; border-bottom: 1px solid #000; border-right: 1px solid #000; background: #f0f0f0;">Kondisi Fisik Diterima</td>
-              <td style="padding: 5px 7px; border-bottom: 1px solid #000;"><strong>${item.kondisi || '-'}</strong></td>
+              <td style="padding: 5px 7px; border-bottom: 1px solid #000;"><strong>${cleanVal(item.kondisi, '-')}</strong></td>
             </tr>
             <tr>
               <td style="padding: 5px 7px; font-weight: bold; border-bottom: 1px solid #000; border-right: 1px solid #000; background: #f0f0f0;">Kelengkapan Unit Diterima</td>
-              <td style="padding: 5px 7px; border-bottom: 1px solid #000;"><strong>${item.kelengkapan || 'Unit Only'}</strong></td>
+              <td style="padding: 5px 7px; border-bottom: 1px solid #000;"><strong>${cleanVal(item.kelengkapan, 'Unit Only')}</strong></td>
             </tr>
             <tr>
               <td style="padding: 5px 7px; font-weight: bold; border-bottom: 1px solid #000; border-right: 1px solid #000; background: #f0f0f0;">Deskripsi Keluhan</td>
-              <td style="padding: 5px 7px; border-bottom: 1px solid #000;">${item.issue || '-'}</td>
+              <td style="padding: 5px 7px; border-bottom: 1px solid #000;">${cleanVal(item.issue, '-')}</td>
             </tr>
             <tr>
               <td style="padding: 5px 7px; font-weight: bold; border-bottom: 1px solid #000; border-right: 1px solid #000; background: #f0f0f0;">Estimasi Biaya Perbaikan</td>
-              <td style="padding: 5px 7px; border-bottom: 1px solid #000;"><strong>${item.estimasiBiaya || 'Menunggu Diagnosa'}</strong></td>
+              <td style="padding: 5px 7px; border-bottom: 1px solid #000;"><strong>${cleanVal(item.estimasiBiaya, 'Menunggu Diagnosa')}</strong></td>
             </tr>
             <tr>
               <td style="padding: 5px 7px; font-weight: bold; border-right: 1px solid #000; background: #f0f0f0;">Target Estimasi Selesai</td>
@@ -1888,16 +1918,16 @@
             <tr>
               <td style="padding: 8px; width: 50%; vertical-align: top; border-right: 1px solid #000;">
                 <strong>DITUJUKAN KEPADA:</strong><br>
-                <span style="font-size: 9.5pt; font-weight: bold;">${item.name || '-'}</span><br>
+                <span style="font-size: 9.5pt; font-weight: bold;">${cleanVal(item.name, 'Pelanggan')}</span><br>
                 No. HP/WA: ${item.phone || '-'}<br>
                 Metode Penerimaan: <strong>${statusPengirimanTxt}</strong>
               </td>
               <td style="padding: 8px; width: 50%; vertical-align: top;">
                 <strong>DETAIL PERANGKAT:</strong><br>
                 Unit: <strong>${item.type || 'Kamera'} - ${item.model || '-'}</strong><br>
-                S/N: <strong>${item.sn || '-'}</strong><br>
+                S/N: <strong>${cleanVal(item.sn, '-')}</strong><br>
                 Teknisi: <strong>${item.teknisiName || 'Adib'}</strong><br>
-                Kelengkapan: ${item.kelengkapan || 'Unit Only'}<br>
+                Kelengkapan: ${cleanVal(item.kelengkapan, 'Unit Only')}<br>
                 Waktu Drop: ${item.createdAt || '-'}
               </td>
             </tr>
@@ -1914,7 +1944,7 @@
             </thead>
             <tbody>
               <tr>
-                <td style="padding: 8px; border-right: 1px solid #000;">${item.rincianBiaya || 'Jasa Service & Kalibrasi Unit'}</td>
+                <td style="padding: 8px; border-right: 1px solid #000;">${cleanVal(item.rincianBiaya, 'Jasa Service & Kalibrasi Unit')}</td>
                 <td style="padding: 8px; text-align: center; border-right: 1px solid #000;">1</td>
                 <td style="padding: 8px; text-align: right;">Rp ${biayaAkhirNum.toLocaleString('id-ID')}</td>
               </tr>
@@ -1947,7 +1977,7 @@
               <td style="width: 50%; text-align: center; vertical-align: top;">
                 <p style="margin: 0;">Penerima Barang / Pelanggan,</p>
                 <div style="height: 40px;"></div>
-                <p style="margin: 0; font-weight: bold; text-decoration: underline;">(${item.name || 'Pelanggan'})</p>
+                <p style="margin: 0; font-weight: bold; text-decoration: underline;">(${cleanVal(item.name, 'Pelanggan')})</p>
               </td>
             </tr>
           </table>
