@@ -63,7 +63,7 @@
     </div>
     
     <div class="border-t border-slate-200 pt-4 text-[10px] text-slate-400 text-center font-medium leading-relaxed">
-      Copyright Kevin Eleazar Chandra©<br>Beta Test Ver V1.0
+      Copyright Kevin Eleazar Chandra©<br>Beta Test Ver V1.1
     </div>
   </div>
 
@@ -314,7 +314,8 @@
   <div id="printableArea"></div>
 
   <script>
-    const STATUS_STAGES = ["Diterima", "Diagnosa", "Pengerjaan", "Selesai"];
+    // TAHAPAN STATUS SAMA DENGAN WEB TEKNISI
+    const STATUS_STAGES = ["Diterima", "Antrian Pengecekan", "Diagnosa", "Pengerjaan", "Selesai", "Cancel"];
     const DEFAULT_SHEET_URL = "https://script.google.com/macros/s/AKfycbyp0zx4Thgz1nh4r7OQAwUpE1izZ6gN3hdU85lMSk1vkW9EuKBBRmbGceKt4229e6yZ/exec";
 
     let currentFilter = 'all';
@@ -655,8 +656,10 @@
     }
 
     function getDeadlineStatus(targetStr, status) {
-      if (status === 'Selesai') return { text: '✅ Selesai', color: 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold', level: 3 };
-      
+      const statusVal = String(status || '').trim().toLowerCase();
+      if (statusVal === 'selesai') return { text: '✅ Selesai', color: 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold', level: 3 };
+      if (statusVal === 'cancel' || statusVal === 'batal') return { text: '❌ Cancel / Batal', color: 'bg-rose-100 text-rose-800 border-rose-300 font-bold', level: 3 };
+
       const targetDateObj = parseTargetDate(targetStr);
       if (!targetDateObj) return { text: 'Tanpa Target Waktu', color: 'bg-slate-100 text-slate-600 border-slate-300', level: 2 };
 
@@ -1037,13 +1040,15 @@
       const adibActiveCount = spkData.filter(item => {
         sanitizeSPKItem(item);
         const techName = String(item.teknisiName || '').toLowerCase();
-        return techName.includes('adib') && String(item.status || '').trim() !== 'Selesai';
+        const statusVal = String(item.status || '').trim().toLowerCase();
+        return techName.includes('adib') && statusVal !== 'selesai' && statusVal !== 'cancel';
       }).length;
 
       const okyActiveCount = spkData.filter(item => {
         sanitizeSPKItem(item);
         const techName = String(item.teknisiName || '').toLowerCase();
-        return techName.includes('oky') && String(item.status || '').trim() !== 'Selesai';
+        const statusVal = String(item.status || '').trim().toLowerCase();
+        return techName.includes('oky') && statusVal !== 'selesai' && statusVal !== 'cancel';
       }).length;
 
       document.getElementById('countAdibActive').innerText = adibActiveCount;
@@ -1066,11 +1071,11 @@
         }
 
         if (currentFilter === 'update' && !item.hasUnreadUpdate) return false;
-        if (currentFilter === 'active' && item.status === 'Selesai') return false;
+        if (currentFilter === 'active' && (item.status === 'Selesai' || item.status === 'Cancel')) return false;
         if (currentFilter === 'completed' && item.status !== 'Selesai') return false;
         if (currentFilter === 'unpaid' && (item.status !== 'Selesai' || item.paymentStatus === 'Lunas')) return false;
         if (currentFilter === 'warning') {
-          if (item.status === 'Selesai') return false;
+          if (item.status === 'Selesai' || item.status === 'Cancel') return false;
           if (getDeadlineStatus(item.targetDate, item.status).level > 1) return false;
         }
         if (currentFilter === 'ekspedisi' && (item.deliveryType !== 'Ekspedisi' && item.deliveryType !== 'Pedagang_Ekspedisi')) return false;
@@ -1281,7 +1286,6 @@
         statusBadgeText = "PEDAGANG EKSPEDISI";
       }
 
-      // Syarat & Ketentuan dengan bullet point (•) agar rapi dan tidak bertumpuk
       let termsHtml = `
         <li style="margin-bottom: 3px; padding-left: 4px;">SPK ini berlaku sebagai tanda terima unit dan harus disertakan kembali pada waktu pengambilan unit.</li>
         <li style="margin-bottom: 3px; padding-left: 4px;">Konfirmasi service akan dikirimkan ke pelanggan apabila diperlukan penggantian spare part. Bila tidak ada spare part yang perlu diganti kami akan melakukan servis sesuai biaya estimasi di awal.</li>
