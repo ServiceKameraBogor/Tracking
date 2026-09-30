@@ -238,18 +238,44 @@
 
       if (!queryId) return;
 
-      resContainer.classList.add('hidden', 'opacity-0', 'translate-y-3');
       errContainer.classList.add('hidden');
-      searchBtn.disabled = true;
-      btnText.classList.add('hidden');
-      btnLoader.classList.remove('hidden');
 
+      // 1. OPSI INSTAN (< 10ms): CEK CACHE LOCALSTORAGE TERLEBIH DAHULU
+      let foundInCache = false;
+      try {
+        const localData = JSON.parse(localStorage.getItem('spkData')) || [];
+        if (Array.isArray(localData) && localData.length > 0) {
+          const cachedItem = localData.find(d => String(d.id || d['no spk'] || d.ID || '').trim().toUpperCase() === queryId);
+          if (cachedItem) {
+            currentItemData = cachedItem;
+            displayResult(cachedItem);
+            resContainer.classList.remove('hidden');
+            setTimeout(() => {
+              resContainer.classList.remove('opacity-0', 'translate-y-3');
+            }, 10);
+            foundInCache = true;
+          }
+        }
+      } catch (e) {}
+
+      // Jika data belum ada di lokal, tampilkan spinner loading
+      if (!foundInCache) {
+        resContainer.classList.add('hidden', 'opacity-0', 'translate-y-3');
+        searchBtn.disabled = true;
+        btnText.classList.add('hidden');
+        btnLoader.classList.remove('hidden');
+      }
+
+      // 2. FETCH CLOUD BACKGROUND SYNC DARI GOOGLE SHEETS
       try {
         const response = await fetch(SHEET_URL);
         const data = await response.json();
 
         if (Array.isArray(data)) {
-          const item = data.find(d => String(d.id || d['no spk'] || '').trim().toUpperCase() === queryId);
+          // Simpan cache terbaru
+          localStorage.setItem('spkData', JSON.stringify(data));
+
+          const item = data.find(d => String(d.id || d['no spk'] || d.ID || '').trim().toUpperCase() === queryId);
 
           if (item) {
             currentItemData = item;
@@ -257,15 +283,18 @@
             resContainer.classList.remove('hidden');
             setTimeout(() => {
               resContainer.classList.remove('opacity-0', 'translate-y-3');
-            }, 50);
-          } else {
+            }, 10);
+            errContainer.classList.add('hidden');
+          } else if (!foundInCache) {
             errContainer.classList.remove('hidden');
           }
         }
       } catch (err) {
         console.error("Gagal mengambil data:", err);
-        errContainer.innerText = "Gagal terhubung ke database. Pastikan koneksi internet aktif.";
-        errContainer.classList.remove('hidden');
+        if (!foundInCache) {
+          errContainer.innerText = "Gagal terhubung ke database. Pastikan koneksi internet aktif.";
+          errContainer.classList.remove('hidden');
+        }
       } finally {
         searchBtn.disabled = false;
         btnText.classList.remove('hidden');
