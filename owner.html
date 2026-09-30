@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Service Kamera Bogor - Owner Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    #printableArea { display: none; }
+    @media print {
+      @page { margin: 1cm; size: auto; }
+      body { background: #fff !important; color: #000 !important; }
+      body * { visibility: hidden !important; }
+      #printableArea, #printableArea * { visibility: visible !important; }
+      #printableArea {
+        display: block !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        font-size: 10pt;
+        color: #000 !important;
+        background: #fff !important;
+      }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col items-center p-4">
+
+  <!-- SIDEBAR NAVIGATION DRAWER -->
+  <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/50 z-40 hidden transition-opacity"></div>
+  <div id="sidebarMenu" class="fixed top-0 left-0 bottom-0 w-72 bg-white z-50 shadow-2xl p-5 transform -translate-x-full transition-transform duration-300 flex flex-col justify-between">
+    <div class="space-y-6">
+      <div class="flex justify-between items-center border-b border-slate-200 pb-4">
+        <h2 class="font-black text-sm text-slate-900 tracking-tight">NAVIGASI OWNER</h2>
+        <button onclick="toggleSidebar()" class="text-slate-400 hover:text-slate-700 font-bold text-lg p-1">✕</button>
+      </div>
+
+      <div class="space-y-2 text-xs font-bold">
+        <button onclick="switchView('total'); toggleSidebar();" id="navTotal" class="w-full text-left px-3.5 py-2.5 rounded-xl bg-amber-400 text-slate-950 flex items-center gap-2.5 shadow-sm transition">
+          <span>📊</span> Total Pendapatan Toko
+        </button>
+        <button onclick="switchView('adib'); toggleSidebar();" id="navAdib" class="w-full text-left px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center gap-2.5 transition">
+          <span>👨‍🔧</span> Penghasilan Teknisi Adib
+        </button>
+        <button onclick="switchView('oky'); toggleSidebar();" id="navOky" class="w-full text-left px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center gap-2.5 transition">
+          <span>👨‍🔧</span> Penghasilan Teknisi Oky
+        </button>
+        <button onclick="switchView('pedagang'); toggleSidebar();" id="navPedagang" class="w-full text-left px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center gap-2.5 transition">
+          <span>🤝</span> Unit & Tagihan Pedagang
+        </button>
+      </div>
+    </div>
+    
+    <div class="border-t border-slate-200 pt-4 text-[10px] text-slate-400 text-center font-medium leading-relaxed">
+      Copyright by Kevin Eleazar Chandra Build V1.1
+    </div>
+  </div>
+
+  <div class="w-full max-w-4xl bg-white rounded-2xl shadow-lg p-6 my-4 border border-slate-200 space-y-6 no-print">
+    
+    <!-- HEADER OWNER PORTAL -->
+    <div class="text-center border-b border-slate-200 pb-4 relative">
+      <button onclick="toggleSidebar()" class="absolute left-0 top-0 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 p-2 rounded-xl transition flex items-center gap-1.5 shadow-sm active:scale-95">
+        <span class="text-sm font-black">☰</span>
+        <span class="text-[10px] font-bold hidden sm:inline">Menu</span>
+      </button>
+
+      <div class="absolute right-0 top-0 flex items-center gap-1.5 bg-amber-50 border border-amber-300 px-2.5 py-1 rounded-full text-[10px] text-amber-900 font-bold">
+        <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+        <span>👑 Dashboard Owner</span>
+      </div>
+
+      <h1 class="text-2xl font-black text-slate-900 tracking-tight">SERVICE KAMERA BOGOR</h1>
+    </div>
+
+    <!-- LAMAN 1: TOTAL PENDAPATAN TOKO -->
+    <div id="viewTotal" class="space-y-6">
+      <div class="border-b border-slate-200 pb-3">
+        <h2 class="font-black text-base text-slate-900">📊 Ringkasan Total Pendapatan Toko</h2>
+        <p class="text-xs text-slate-500 mt-0.5">Ringkasan hasil pengerjaan seluruh unit (Lunas & Belum Lunas).</p>
+      </div>
+
+      <!-- CARDS RINGKASAN GLOBAL -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="bg-emerald-50 border border-emerald-300 p-3.5 rounded-xl shadow-sm">
+          <span class="text-[10px] text-emerald-800 font-bold block">Total Pendapatan Toko (Selesai)</span>
+          <h3 id="totalGlobalRevenue" class="text-xl font-black text-emerald-950 mt-1">Rp 0</h3>
+          <p id="totalGlobalSub" class="text-[9px] text-emerald-800 font-medium mt-0.5">Lunas: Rp 0 | Belum: Rp 0</p>
+        </div>
+
+        <div class="bg-amber-50 border border-amber-300 p-3.5 rounded-xl shadow-sm">
+          <span class="text-[10px] text-amber-900 font-bold block">Total Hasil Pekerjaan Adib</span>
+          <h3 id="totalOmsetAdib" class="text-xl font-black text-amber-950 mt-1">Rp 0</h3>
+          <p id="countUnitAdib" class="text-[9px] text-amber-800 mt-0.5">0 Unit Selesai</p>
+        </div>
+
+        <div class="bg-blue-50 border border-blue-300 p-3.5 rounded-xl shadow-sm">
+          <span class="text-[10px] text-blue-900 font-bold block">Total Hasil Pekerjaan Oky</span>
+          <h3 id="totalOmsetOky" class="text-xl font-black text-blue-950 mt-1">Rp 0</h3>
+          <p id="countUnitOky" class="text-[9px] text-blue-800 mt-0.5">0 Unit Selesai</p>
+        </div>
+
+        <div class="bg-purple-50 border border-purple-300 p-3.5 rounded-xl shadow-sm">
+          <span class="text-[10px] text-purple-900 font-bold block">Omset Unit Pedagang</span>
+          <h3 id="totalOmsetPedagang" class="text-xl font-black text-purple-950 mt-1">Rp 0</h3>
+          <p id="countUnitPedagang" class="text-[9px] text-purple-800 mt-0.5">0 Unit Pedagang</p>
+        </div>
+      </div>
+
+      <!-- TABEL TRANSAKSI KEUANGAN -->
+      <div class="space-y-3">
+        <div class="flex justify-between items-center">
+          <h4 class="font-extrabold text-xs text-slate-900 uppercase tracking-wide">Daftar Seluruh Unit Selesai / Lunas:</h4>
+          <input type="text" id="searchTotalInput" oninput="renderOwnerData()" placeholder="🔍 Cari SPK, Nama, Unit..." class="p-2 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none focus:border-amber-400 w-48 font-medium">
+        </div>
+
+        <div class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-200/70 text-slate-700 border-b border-slate-200 font-bold">
+                  <th class="p-3">No. SPK</th>
+                  <th class="p-3">Pelanggan</th>
+                  <th class="p-3">Unit / Kamera</th>
+                  <th class="p-3">Teknisi</th>
+                  <th class="p-3">Status Bayar</th>
+                  <th class="p-3 text-right">Biaya Akhir</th>
+                </tr>
+              </thead>
+              <tbody id="tableTotalBody" class="divide-y divide-slate-200 bg-white">
+                <tr><td colspan="6" class="p-4 text-center text-slate-400 font-medium">Memuat data...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LAMAN 2: LAPORAN PENGHASILAN TEKNISI ADIB -->
+    <div id="viewAdib" class="hidden space-y-6">
+      <div class="border-b border-slate-200 pb-3 flex justify-between items-center">
+        <div>
+          <h2 class="font-black text-base text-slate-900">👨‍🔧 Laporan Total Hasil Pekerjaan Teknisi Adib</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Mencakup seluruh unit Selesai yang dikerjakan Adib (Lunas & Belum Lunas).</p>
+        </div>
+        <button onclick="switchView('total')" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold px-3 py-1.5 rounded-lg transition">Kembali ke Total</button>
+      </div>
+
+      <div class="bg-amber-50 border border-amber-300 p-4 rounded-xl flex flex-col md:flex-row justify-between md:items-center gap-3 shadow-sm">
+        <div>
+          <span class="text-xs text-amber-900 font-bold block">Total Seluruh Pekerjaan Adib (Selesai)</span>
+          <h3 id="adibRevenueDetail" class="text-2xl font-black text-amber-950">Rp 0</h3>
+          <p id="adibSubDetail" class="text-[11px] text-amber-800 font-medium mt-0.5">Lunas: Rp 0 | Belum Lunas: Rp 0</p>
+        </div>
+        <div class="text-left md:text-right border-t md:border-t-0 pt-2 md:pt-0 border-amber-200">
+          <span id="adibUnitDetail" class="text-lg font-black text-amber-900">0 Unit</span>
+          <span class="text-[10px] text-amber-700 block font-medium">Total Selesai Dikerjakan</span>
+        </div>
+      </div>
+
+      <div class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-200/70 text-slate-700 border-b border-slate-200 font-bold">
+                <th class="p-3">No. SPK</th>
+                <th class="p-3">Pelanggan</th>
+                <th class="p-3">Unit / Perangkat</th>
+                <th class="p-3">Rincian Pekerjaan</th>
+                <th class="p-3">Status Bayar</th>
+                <th class="p-3 text-right">Biaya Service</th>
+              </tr>
+            </thead>
+            <tbody id="tableAdibBody" class="divide-y divide-slate-200 bg-white">
+              <tr><td colspan="6" class="p-4 text-center text-slate-400 font-medium">Belum ada data pengerjaan Adib.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- LAMAN 3: LAPORAN PENGHASILAN TEKNISI OKY -->
+    <div id="viewOky" class="hidden space-y-6">
+      <div class="border-b border-slate-200 pb-3 flex justify-between items-center">
+        <div>
+          <h2 class="font-black text-base text-slate-900">👨‍🔧 Laporan Total Hasil Pekerjaan Teknisi Oky</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Mencakup seluruh unit Selesai yang dikerjakan Oky (Lunas & Belum Lunas).</p>
+        </div>
+        <button onclick="switchView('total')" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold px-3 py-1.5 rounded-lg transition">Kembali ke Total</button>
+      </div>
+
+      <div class="bg-blue-50 border border-blue-300 p-4 rounded-xl flex flex-col md:flex-row justify-between md:items-center gap-3 shadow-sm">
+        <div>
+          <span class="text-xs text-blue-900 font-bold block">Total Seluruh Pekerjaan Oky (Selesai)</span>
+          <h3 id="okyRevenueDetail" class="text-2xl font-black text-blue-950">Rp 0</h3>
+          <p id="okySubDetail" class="text-[11px] text-blue-800 font-medium mt-0.5">Lunas: Rp 0 | Belum Lunas: Rp 0</p>
+        </div>
+        <div class="text-left md:text-right border-t md:border-t-0 pt-2 md:pt-0 border-blue-200">
+          <span id="okyUnitDetail" class="text-lg font-black text-blue-900">0 Unit</span>
+          <span class="text-[10px] text-blue-700 block font-medium">Total Selesai Dikerjakan</span>
+        </div>
+      </div>
+
+      <div class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-200/70 text-slate-700 border-b border-slate-200 font-bold">
+                <th class="p-3">No. SPK</th>
+                <th class="p-3">Pelanggan</th>
+                <th class="p-3">Unit / Perangkat</th>
+                <th class="p-3">Rincian Pekerjaan</th>
+                <th class="p-3">Status Bayar</th>
+                <th class="p-3 text-right">Biaya Service</th>
+              </tr>
+            </thead>
+            <tbody id="tableOkyBody" class="divide-y divide-slate-200 bg-white">
+              <tr><td colspan="6" class="p-4 text-center text-slate-400 font-medium">Belum ada data pengerjaan Oky.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- LAMAN 4: LAPORAN UNIT & TAGIHAN PEDAGANG -->
+    <div id="viewPedagang" class="hidden space-y-6">
+      <div class="border-b border-slate-200 pb-3 flex flex-col md:flex-row justify-between md:items-center gap-2">
+        <div>
+          <h2 class="font-black text-base text-slate-900">🤝 Laporan Khusus Unit & Tagihan Pedagang</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Cari pedagang untuk merekap tagihan Selesai & mencetak Invoice Rekap.</p>
+        </div>
+        <button onclick="switchView('total')" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold px-3 py-1.5 rounded-lg transition self-start md:self-auto">Kembali ke Total</button>
+      </div>
+
+      <!-- SEARCH PEDAGANG INPUT -->
+      <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2">
+        <label class="block text-xs font-bold text-slate-800">🔍 Cari Nama Pedagang / Mitra:</label>
+        <input type="text" id="searchPedagangInput" oninput="renderOwnerData()" placeholder="Ketik nama pedagang (contoh: Robby, Budi, KameraBogor...)" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-amber-400">
+      </div>
+
+      <!-- BOX REKAP TAGIHAN OTOMATIS PEDAGANG -->
+      <div id="boxUnpaidPedagang" class="hidden bg-rose-50 border border-rose-300 p-4 rounded-xl space-y-3 shadow-sm">
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-rose-200 pb-2">
+          <div>
+            <span class="text-[10px] text-rose-800 font-bold uppercase tracking-wide">📌 Rekap Tagihan Belum Lunas (Unit Selesai)</span>
+            <h3 id="unpaidPedagangName" class="text-base font-black text-rose-950">Pedagang: -</h3>
+          </div>
+          <div class="text-left sm:text-right">
+            <span id="unpaidPedagangTotal" class="text-xl font-black text-rose-900 block">Rp 0</span>
+            <span id="unpaidPedagangCount" class="text-[10px] font-bold text-rose-700 block">0 Unit Selesai Belum Lunas</span>
+          </div>
+        </div>
+
+        <!-- LIST DETIL TAGIHAN UNPAID -->
+        <div class="space-y-1" id="unpaidPedagangItemList"></div>
+
+        <div class="flex flex-col sm:flex-row gap-2 pt-1">
+          <button id="btnSendWaPedagang" onclick="sendWaTagihanPedagang()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-2.5 rounded-xl text-xs transition shadow flex items-center justify-center gap-1.5">
+            <span>💬 Kirim Rekap Tagihan via WhatsApp</span>
+          </button>
+          <button id="btnPrintRekapPedagang" onclick="printInvoiceRekapPedagang()" class="flex-1 bg-slate-900 hover:bg-slate-800 text-amber-400 font-extrabold py-2.5 rounded-xl text-xs transition shadow flex items-center justify-center gap-1.5">
+            <span>🖨️ Cetak Invoice Rekap (PDF)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- RINGKASAN PEDAGANG -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="bg-purple-50 border border-purple-300 p-4 rounded-xl shadow-sm">
+          <span class="text-xs text-purple-900 font-bold block">Total Pemasukan Pedagang (Lunas)</span>
+          <h3 id="pedagangRevenueDetail" class="text-2xl font-black text-purple-950 mt-1">Rp 0</h3>
+        </div>
+        <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl shadow-sm">
+          <span class="text-xs text-slate-600 font-bold block">Total Volume Unit Pedagang</span>
+          <h3 id="pedagangUnitDetail" class="text-2xl font-black text-slate-900 mt-1">0 Unit</h3>
+        </div>
+      </div>
+
+      <!-- TABEL UTAMA PEDAGANG -->
+      <div class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-200/70 text-slate-700 border-b border-slate-200 font-bold">
+                <th class="p-3">No. SPK</th>
+                <th class="p-3">Nama Mitra / Pedagang</th>
+                <th class="p-3">Unit / Perangkat</th>
+                <th class="p-3">Teknisi</th>
+                <th class="p-3">Kategori</th>
+                <th class="p-3">Status Bayar</th>
+                <th class="p-3 text-right">Biaya Akhir</th>
+              </tr>
+            </thead>
+            <tbody id="tablePedagangBody" class="divide-y divide-slate-200 bg-white">
+              <tr><td colspan="7" class="p-4 text-center text-slate-400 font-medium">Belum ada unit pedagang tercatat.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN PAGE FOOTER -->
+    <div class="border-t border-slate-200 pt-4 text-center text-[11px] text-slate-400 font-medium">
+      Copyright by Kevin Eleazar Chandra Build V1.1
+    </div>
+
+  </div>
+
+  <div id="printableArea"></div>
+
+  <script>
+    const DEFAULT_SHEET_URL = "https://script.google.com/macros/s/AKfycbyp0zx4Thgz1nh4r7OQAwUpE1izZ6gN3hdU85lMSk1vkW9EuKBBRmbGceKt4229e6yZ/exec";
+    let spkData = [];
+    let currentFilteredPedagangUnpaid = [];
+
+    // FUNGSI PEMBERSIH DATA DARI TANDA TANYA (?)
+    function cleanVal(val, fallback = '-') {
+      if (!val || String(val).trim() === '' || String(val).trim() === '?') return fallback;
+      return String(val).trim().replace(/\?/g, '-');
+    }
+
+    function parseNumeric(val) {
+      if (!val) return 0;
+      if (typeof val === 'number') return isNaN(val) ? 0 : val;
+      const str = String(val).trim();
+      if (str.includes('T') || str.includes('Z') || str.includes(':') || str.includes('/') || str.length > 9) return 0;
+      const cleaned = str.replace(/[^0-9]/g, '');
+      const parsed = parseInt(cleaned, 10);
+      return isNaN(parsed) ? 0 : parsed;
+    }
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebarMenu');
+      const overlay = document.getElementById('sidebarOverlay');
+      const isOpen = sidebar.classList.contains('translate-x-0');
+      
+      if (isOpen) {
+        sidebar.classList.remove('translate-x-0');
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+      } else {
+        sidebar.classList.remove('-translate-x-full');
+        sidebar.classList.add('translate-x-0');
+        overlay.classList.remove('hidden');
+      }
+    }
+
+    function switchView(viewName) {
+      const views = ['total', 'adib', 'oky', 'pedagang'];
+      views.forEach(v => {
+        const el = document.getElementById(`view${v.charAt(0).toUpperCase() + v.slice(1)}`);
+        const nav = document.getElementById(`nav${v.charAt(0).toUpperCase() + v.slice(1)}`);
+        if (el) el.classList.add('hidden');
+        if (nav) nav.className = 'w-full text-left px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center gap-2.5 transition';
+      });
+
+      const targetEl = document.getElementById(`view${viewName.charAt(0).toUpperCase() + viewName.slice(1)}`);
+      const targetNav = document.getElementById(`nav${viewName.charAt(0).toUpperCase() + viewName.slice(1)}`);
+      if (targetEl) targetEl.classList.remove('hidden');
+      if (targetNav) targetNav.className = 'w-full text-left px-3.5 py-2.5 rounded-xl bg-amber-400 text-slate-950 flex items-center gap-2.5 shadow-sm transition';
+      
+      renderOwnerData();
+    }
+
+    async function loadData() {
+      try {
+        spkData = JSON.parse(localStorage.getItem('spkData')) || [];
+      } catch (e) { spkData = []; }
+
+      renderOwnerData();
+
+      try {
+        const res = await fetch(DEFAULT_SHEET_URL + '?_nc=' + Date.now());
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          spkData = data;
+          localStorage.setItem('spkData', JSON.stringify(data));
+          renderOwnerData();
+        }
+      } catch (err) {
+        console.error("Sync error:", err);
+      }
+    }
+
+    function renderOwnerData() {
+      const queryTotal = (document.getElementById('searchTotalInput')?.value || '').toLowerCase().trim();
+      const queryPedagang = (document.getElementById('searchPedagangInput')?.value || '').toLowerCase().trim();
+
+      // Filter seluruh unit Selesai / Lunas
+      const finishedUnits = spkData.filter(item => {
+        const st = String(item.status || '').toLowerCase();
+        const pay = String(item.paymentStatus || '').toLowerCase();
+        return st === 'selesai' || pay === 'lunas';
+      });
+
+      let globalRevTotal = 0;
+      let globalRevLunas = 0;
+      let globalRevUnpaid = 0;
+
+      finishedUnits.forEach(i => {
+        const amt = parseNumeric(i.biaya);
+        globalRevTotal += amt;
+        if (String(i.paymentStatus || '').toLowerCase() === 'lunas') {
+          globalRevLunas += amt;
+        } else {
+          globalRevUnpaid += amt;
+        }
+      });
+
+      // HITUNGAN TEKNISI ADIB (SELURUH UNIT SELESAI/LUNAS)
+      const adibAllUnits = finishedUnits.filter(i => String(i.teknisiName || '').toLowerCase().includes('adib'));
+      let adibTotalRev = 0, adibLunasRev = 0, adibUnpaidRev = 0;
+
+      adibAllUnits.forEach(i => {
+        const amt = parseNumeric(i.biaya);
+        adibTotalRev += amt;
+        if (String(i.paymentStatus || '').toLowerCase() === 'lunas') adibLunasRev += amt;
+        else adibUnpaidRev += amt;
+      });
+
+      // HITUNGAN TEKNISI OKY (SELURUH UNIT SELESAI/LUNAS)
+      const okyAllUnits = finishedUnits.filter(i => String(i.teknisiName || '').toLowerCase().includes('oky'));
+      let okyTotalRev = 0, okyLunasRev = 0, okyUnpaidRev = 0;
+
+      okyAllUnits.forEach(i => {
+        const amt = parseNumeric(i.biaya);
+        okyTotalRev += amt;
+        if (String(i.paymentStatus || '').toLowerCase() === 'lunas') okyLunasRev += amt;
+        else okyUnpaidRev += amt;
+      });
+
+      // HITUNGAN PEDAGANG
+      const allPedagangUnits = spkData.filter(item => String(item.deliveryType || '').startsWith('Pedagang'));
+      let pedagangLunasRev = 0;
+
+      allPedagangUnits.forEach(item => {
+        if (String(item.paymentStatus || '').toLowerCase() === 'lunas') {
+          pedagangLunasRev += parseNumeric(item.biaya);
+        }
+      });
+
+      // UPDATE HEADER CARDS
+      document.getElementById('totalGlobalRevenue').innerText = `Rp ${globalRevTotal.toLocaleString('id-ID')}`;
+      document.getElementById('totalGlobalSub').innerText = `Lunas: Rp ${globalRevLunas.toLocaleString('id-ID')} | Belum: Rp ${globalRevUnpaid.toLocaleString('id-ID')}`;
+
+      document.getElementById('totalOmsetAdib').innerText = `Rp ${adibTotalRev.toLocaleString('id-ID')}`;
+      document.getElementById('countUnitAdib').innerText = `${adibAllUnits.length} Unit Selesai`;
+      document.getElementById('adibRevenueDetail').innerText = `Rp ${adibTotalRev.toLocaleString('id-ID')}`;
+      document.getElementById('adibSubDetail').innerText = `Lunas: Rp ${adibLunasRev.toLocaleString('id-ID')} | Belum Lunas: Rp ${adibUnpaidRev.toLocaleString('id-ID')}`;
+      document.getElementById('adibUnitDetail').innerText = `${adibAllUnits.length} Unit`;
+
+      document.getElementById('totalOmsetOky').innerText = `Rp ${okyTotalRev.toLocaleString('id-ID')}`;
+      document.getElementById('countUnitOky').innerText = `${okyAllUnits.length} Unit Selesai`;
+      document.getElementById('okyRevenueDetail').innerText = `Rp ${okyTotalRev.toLocaleString('id-ID')}`;
+      document.getElementById('okySubDetail').innerText = `Lunas: Rp ${okyLunasRev.toLocaleString('id-ID')} | Belum Lunas: Rp ${okyUnpaidRev.toLocaleString('id-ID')}`;
+      document.getElementById('okyUnitDetail').innerText = `${okyAllUnits.length} Unit`;
+
+      document.getElementById('totalOmsetPedagang').innerText = `Rp ${pedagangLunasRev.toLocaleString('id-ID')}`;
+      document.getElementById('countUnitPedagang').innerText = `${allPedagangUnits.length} Unit Total`;
+      document.getElementById('pedagangRevenueDetail').innerText = `Rp ${pedagangLunasRev.toLocaleString('id-ID')}`;
+      document.getElementById('pedagangUnitDetail').innerText = `${allPedagangUnits.length} Unit Total`;
+
+      // 1. RENDER TABLE TOTAL TOKO
+      const tTotal = document.getElementById('tableTotalBody');
+      const filteredTotal = finishedUnits.filter(i => {
+        if (!queryTotal) return true;
+        return String(i.id).toLowerCase().includes(queryTotal) ||
+               String(i.name).toLowerCase().includes(queryTotal) ||
+               String(i.model).toLowerCase().includes(queryTotal);
+      });
+
+      if (filteredTotal.length === 0) {
+        tTotal.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400 font-medium">Tidak ada data unit selesai.</td></tr>`;
+      } else {
+        tTotal.innerHTML = filteredTotal.map(i => {
+          const isLunas = String(i.paymentStatus || '').toLowerCase() === 'lunas';
+          const payBadge = isLunas 
+            ? '<span class="px-2 py-0.5 text-[9px] font-extrabold rounded bg-emerald-100 text-emerald-800">LUNAS</span>'
+            : '<span class="px-2 py-0.5 text-[9px] font-extrabold rounded bg-rose-100 text-rose-800">BELUM LUNAS</span>';
+
+          return `
+            <tr class="hover:bg-slate-50 border-b border-slate-200">
+              <td class="p-3 font-bold text-slate-900">${i.id}</td>
+              <td class="p-3 font-medium text-slate-800">${cleanVal(i.name, 'Pelanggan')}</td>
+              <td class="p-3 text-slate-700">${i.type || 'Unit'}: ${i.model || '-'}</td>
+              <td class="p-3 font-bold text-amber-900">👨‍🔧 ${i.teknisiName || 'Adib'}</td>
+              <td class="p-3">${payBadge}</td>
+              <td class="p-3 text-right font-black text-slate-900">Rp ${parseNumeric(i.biaya).toLocaleString('id-ID')}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // 2. RENDER TABLE ADIB
+      const tAdib = document.getElementById('tableAdibBody');
+      if (adibAllUnits.length === 0) {
+        tAdib.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400 font-medium">Belum ada data pengerjaan Teknisi Adib.</td></tr>`;
+      } else {
+        tAdib.innerHTML = adibAllUnits.map(i => {
+          const isLunas = String(i.paymentStatus || '').toLowerCase() === 'lunas';
+          const payBadge = isLunas 
+            ? '<span class="px-2 py-0.5 text-[9px] font-extrabold rounded bg-emerald-100 text-emerald-800">LUNAS</span>'
+            : '<span class="px-2 py-0.5 text-[9px] font-extrabold rounded bg-rose-100 text-rose-800">BELUM LUNAS</span>';
+
+          return `
+            <tr class="hover:bg-slate-50 border-b border-slate-200">
+              <td class="p-3 font-bold text-slate-900">${i.id}</td>
+              <td class="p-3 font-medium text-slate-800">${cleanVal(i.name, 'Pelanggan')}</td>
+              <td class="p-3 text-slate-700">${i.type || 'Unit'}: ${i.model || '-'}</td>
+              <td class="p-3 text-slate-600">${cleanVal(i.rincianBiaya, 'Jasa Service & Kalibrasi')}</td>
+              <td class="p-3">${payBadge}</td>
+              <td class="p-3 text-right font-black text-slate-900">Rp ${parseNumeric(i.biaya).toLocaleString('id-ID')}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // 3. RENDER TABLE OKY
+      const tOky = document.getElementById('tableOkyBody');
+      if (okyAllUnits.length === 0) {
+        tOky.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400 font-medium">Belum ada data pengerjaan Teknisi Oky.</td></tr>`;
+      } else {
+        tOky.innerHTML = okyAllUnits.map(i => {
+          const isLunas = String(i.paymentStatus || '').toLowerCase() === 'lunas';
+          const payBadge = isLunas 
+            ? '<span class="px-2 py-0.5 text-[9px] font-extrabold rounded bg-emerald-100 text-emerald-800">LUNAS</span>'
+            : '<span class="px-2 py-0.5 text-[9px] font-extrabold rounded bg-rose-100 text-rose-800">BELUM LUNAS</span>';
+
+          return `
+            <tr class="hover:bg-slate-50 border-b border-slate-200">
+              <td class="p-3 font-bold text-slate-900">${i.id}</td>
+              <td class="p-3 font-medium text-slate-800">${cleanVal(i.name, 'Pelanggan')}</td>
+              <td class="p-3 text-slate-700">${i.type || 'Unit'}: ${i.model || '-'}</td>
+              <td class="p-3 text-slate-600">${cleanVal(i.rincianBiaya, 'Jasa Service & Kalibrasi')}</td>
+              <td class="p-3">${payBadge}</td>
+              <td class="p-3 text-right font-black text-slate-900">Rp ${parseNumeric(i.biaya).toLocaleString('id-ID')}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // 4. RENDER TABLE PEDAGANG & REKAP UNPAID (KHUSUS STATUS SELESAI)
+      const tPedagang = document.getElementById('tablePedagangBody');
+      const boxUnpaid = document.getElementById('boxUnpaidPedagang');
+
+      const filteredPedagang = allPedagangUnits.filter(i => {
+        if (!queryPedagang) return true;
+        return String(i.name || '').toLowerCase().includes(queryPedagang) ||
+               String(i.id || '').toLowerCase().includes(queryPedagang);
+      });
+
+      // FILTER TAGIHAN PEDAGANG: HANYA YANG STATUS "SELESAI" DAN "BELUM LUNAS"
+      if (queryPedagang && filteredPedagang.length > 0) {
+        const unpaidPedagang = filteredPedagang.filter(i => 
+          String(i.status || '').toLowerCase() === 'selesai' && 
+          String(i.paymentStatus || '').toLowerCase() !== 'lunas'
+        );
+        currentFilteredPedagangUnpaid = unpaidPedagang;
+
+        if (unpaidPedagang.length > 0) {
+          let sumUnpaid = 0;
+          let itemsHtml = '';
+
+          unpaidPedagang.forEach(item => {
+            const cost = parseNumeric(item.biaya) || parseNumeric(item.estimasiBiaya) || 0;
+            sumUnpaid += cost;
+            itemsHtml += `
+              <div class="flex justify-between items-center text-xs bg-white p-2 rounded-lg border border-rose-200 font-medium">
+                <div>
+                  <span class="font-extrabold text-slate-900">${item.id}</span> - <span class="text-slate-800 font-bold">${item.type} ${item.model}</span>
+                  <span class="text-[10px] text-slate-500 block">S/N: ${cleanVal(item.sn, '-')} | Status: Selesai</span>
+                </div>
+                <span class="font-black text-rose-800">Rp ${cost.toLocaleString('id-ID')}</span>
+              </div>
+            `;
+          });
+
+          document.getElementById('unpaidPedagangName').innerText = `Mitra / Pedagang: ${cleanVal(unpaidPedagang[0].name, queryPedagang.toUpperCase())}`;
+          document.getElementById('unpaidPedagangTotal').innerText = `Rp ${sumUnpaid.toLocaleString('id-ID')}`;
+          document.getElementById('unpaidPedagangCount').innerText = `${unpaidPedagang.length} Unit Selesai Belum Lunas`;
+          document.getElementById('unpaidPedagangItemList').innerHTML = itemsHtml;
+          boxUnpaid.classList.remove('hidden');
+        } else {
+          boxUnpaid.classList.add('hidden');
+        }
+      } else {
+        boxUnpaid.classList.add('hidden');
+      }
+
+      if (filteredPedagang.length === 0) {
+        tPedagang.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400 font-medium">Tidak ada unit pedagang yang cocok dengan pencarian.</td></tr>`;
+      } else {
+        tPedagang.innerHTML = filteredPedagang.map(i => {
+          const isLunas = String(i.paymentStatus || '').toLowerCase() === 'lunas';
+          const payBadge = isLunas 
+            ? '<span class="px-2 py-0.5 text-[9px] font-extrabold rounded bg-emerald-100 text-emerald-800">LUNAS</span>'
+            : '<span class="px-2 py-0.5 text-[9px] font-extrabold rounded bg-rose-100 text-rose-800">BELUM LUNAS</span>';
+
+          const catBadge = i.deliveryType === 'Pedagang_Ekspedisi'
+            ? '<span class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-purple-100 text-purple-800">Ekspedisi</span>'
+            : '<span class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-amber-100 text-amber-900">Datang Store</span>';
+
+          return `
+            <tr class="hover:bg-slate-50 border-b border-slate-200">
+              <td class="p-3 font-bold text-slate-900">${i.id}</td>
+              <td class="p-3 font-medium text-slate-800">${cleanVal(i.name, 'Pedagang')}</td>
+              <td class="p-3 text-slate-700">${i.type || 'Unit'}: ${i.model || '-'}</td>
+              <td class="p-3 font-bold text-slate-700">👨‍🔧 ${i.teknisiName || 'Adib'}</td>
+              <td class="p-3">${catBadge}</td>
+              <td class="p-3">${payBadge}</td>
+              <td class="p-3 text-right font-black text-slate-900">Rp ${parseNumeric(i.biaya).toLocaleString('id-ID')}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+
+    // FUNGSI KIRIM WA TAGIHAN REKAP PEDAGANG
+    function sendWaTagihanPedagang() {
+      if (!currentFilteredPedagangUnpaid || currentFilteredPedagangUnpaid.length === 0) {
+        alert("Tidak ada tagihan Selesai yang belum lunas untuk dikirim.");
+        return;
+      }
+
+      const firstItem = currentFilteredPedagangUnpaid[0];
+      const pedagangName = cleanVal(firstItem.name, 'Mitra Pedagang');
+      let phone = (firstItem.phone || '').replace(/[^0-9]/g, '');
+      if (phone.startsWith('0')) phone = '62' + phone.slice(1);
+
+      let totalBiaya = 0;
+      let textList = '';
+
+      currentFilteredPedagangUnpaid.forEach((item) => {
+        const cost = parseNumeric(item.biaya) || parseNumeric(item.estimasiBiaya) || 0;
+        totalBiaya += cost;
+        textList += `- *${item.id}* : ${item.type} ${item.model} (S/N: ${cleanVal(item.sn, '-')}) : *Rp ${cost.toLocaleString('id-ID')}*\n`;
+      });
+
+      const textMessage = `Halo Kak *${pedagangName}*,\n\nBerikut rincian *TAGIHAN PEMBAYARAN SERVICE (BELUM LUNAS)* unit yang telah SELESAI di *Service Kamera Bogor*:\n\n${textList}\n- *TOTAL TAGIHAN:* *Rp ${totalBiaya.toLocaleString('id-ID')}*\n\n- *REKENING PEMBAYARAN:*\nBank BRI: *720001006926530*\na/n *Muhamad Fauzi*\n\nMohon konfirmasi jika pembayaran sudah ditransfer. Terima kasih banyak Kak!`;
+
+      if (phone) {
+        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(textMessage)}`, '_blank');
+      } else {
+        window.open(`https://wa.me/?text=${encodeURIComponent(textMessage)}`, '_blank');
+      }
+    }
+
+    // FUNGSI CETAK INVOICE REKAP (KOLEKTIF UNTUK PEDAGANG)
+    function printInvoiceRekapPedagang() {
+      if (!currentFilteredPedagangUnpaid || currentFilteredPedagangUnpaid.length === 0) {
+        alert("Tidak ada tagihan Selesai yang belum lunas untuk dicetak!");
+        return;
+      }
+
+      const firstItem = currentFilteredPedagangUnpaid[0];
+      const pedagangName = cleanVal(firstItem.name, 'Mitra Pedagang');
+      const phone = cleanVal(firstItem.phone, '-');
+      const logoData = localStorage.getItem('companyLogo') || '';
+      const logoHtml = logoData ? `<img src="${logoData}" style="max-height: 55px; max-width: 160px; object-fit: contain; margin-bottom: 5px;">` : '';
+
+      const oldTitle = document.title;
+      document.title = `Invoice_Rekap_${pedagangName.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}`;
+
+      let totalBiaya = 0;
+      let rowsHtml = '';
+
+      currentFilteredPedagangUnpaid.forEach((item, index) => {
+        const cost = parseNumeric(item.biaya) || parseNumeric(item.estimasiBiaya) || 0;
+        totalBiaya += cost;
+
+        const spkId = cleanVal(item.id, '-');
+        const unitTxt = `${cleanVal(item.type, 'Unit')} - ${cleanVal(item.model, '-')}`;
+        const snTxt = cleanVal(item.sn, '-');
+        const rincianTxt = cleanVal(item.rincianBiaya, 'Jasa Service & Kalibrasi Unit');
+
+        rowsHtml += `
+          <tr style="border-bottom: 1px solid #ddd;">
+            <td style="padding: 8px; text-align: center; font-weight: bold;">${index + 1}</td>
+            <td style="padding: 8px; font-weight: bold; color: #78350f;">${spkId}</td>
+            <td style="padding: 8px; font-weight: bold;">${unitTxt}</td>
+            <td style="padding: 8px; font-family: monospace; font-size: 8pt;">${snTxt}</td>
+            <td style="padding: 8px; color: #334155;">${rincianTxt}</td>
+            <td style="padding: 8px; text-align: right; font-weight: bold;">Rp ${cost.toLocaleString('id-ID')}</td>
+          </tr>
+        `;
+      });
+
+      document.getElementById('printableArea').innerHTML = `
+        <div style="font-family: Arial, sans-serif; max-width: 850px; margin: 0 auto; color: #000; line-height: 1.4; padding: 10px;">
+          <table style="width: 100%; border-collapse: collapse; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px;">
+            <tr>
+              <td style="vertical-align: top; width: 55%;">
+                ${logoHtml}
+                <h2 style="margin: 0; font-size: 15pt; font-weight: bold; text-transform: uppercase;">SERVICE KAMERA BOGOR</h2>
+                <p style="margin: 2px 0 0 0; font-size: 8.5pt;">Ruko, Jl. Bumi Sentosa Raya No.7, Nanggewer Mekar, Kec. Cibinong, Kabupaten Bogor, Jawa Barat 16912</p>
+                <p style="margin: 0; font-size: 8.5pt;">Telp/WA: 0895-6000-70007</p>
+              </td>
+              <td style="text-align: right; vertical-align: top; width: 45%;">
+                <h3 style="margin: 0; font-size: 14pt; text-transform: uppercase;">INVOICE REKAP TAGIHAN</h3>
+                <p style="margin: 3px 0 0 0; font-size: 9pt; font-weight: bold;">Tanggal: ${new Date().toLocaleDateString('id-ID', {year:'numeric', month:'long', day:'numeric'})}</p>
+                <div style="margin-top: 5px; display: inline-block; border: 1px solid #000; padding: 2px 8px; font-size: 8pt; font-weight: bold; text-transform: uppercase; background: #f0f0f0;">TAGIHAN MITRA / PEDAGANG</div>
+              </td>
+            </tr>
+          </table>
+
+          <div style="border: 1px solid #000; padding: 8px 12px; margin-bottom: 15px; font-size: 9pt; background: #f8fafc;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="width: 60%;"><strong>DITUJUKAN KEPADA MITRA:</strong> <span style="font-size: 10pt; font-weight: bold; text-transform: uppercase; color: #1e293b;">${pedagangName}</span></td>
+                <td style="width: 40%; text-align: right;"><strong>No. HP/WA:</strong> ${phone}</td>
+              </tr>
+            </table>
+          </div>
+
+          <div style="font-size: 9.5pt; font-weight: bold; margin-bottom: 6px; text-transform: uppercase;">DAFTAR UNIT SELESAI (BELUM LUNAS)</div>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 8.5pt; border: 1px solid #000;">
+            <thead>
+              <tr style="background: #f0f0f0; border-bottom: 2px solid #000; text-align: left;">
+                <th style="padding: 8px; text-align: center; width: 35px;">No</th>
+                <th style="padding: 8px; width: 90px;">No. SPK</th>
+                <th style="padding: 8px;">Perangkat / Unit</th>
+                <th style="padding: 8px; width: 110px;">Serial Number</th>
+                <th style="padding: 8px;">Rincian Pekerjaan</th>
+                <th style="padding: 8px; text-align: right; width: 120px;">Biaya</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+
+          <table style="width: 50%; float: right; border-collapse: collapse; margin-bottom: 20px; font-size: 10pt;">
+            <tr style="border: 2px solid #000; background: #f0f0f0;">
+              <td style="padding: 8px; font-weight: bold;">TOTAL TAGIHAN:</td>
+              <td style="padding: 8px; font-weight: bold; text-align: right; font-size: 12pt; color: #991b1b;">Rp ${totalBiaya.toLocaleString('id-ID')}</td>
+            </tr>
+          </table>
+          <div style="clear: both;"></div>
+
+          <div style="border: 1px solid #000; padding: 8px 10px; font-size: 8.5pt; background: #fafafa; margin-top: 10px;">
+            <strong>INFORMASI REKENING PEMBAYARAN (TRANSFER):</strong><br>
+            Bank BRI: <strong>720001006926530</strong> a/n <strong>Muhamad Fauzi</strong><br><br>
+            <strong>Catatan:</strong><br>
+            - Seluruh unit di atas telah selesai dikerjakan dan diuji coba.<br>
+            - Garansi service berlaku selama <strong>30 Hari</strong> sejak unit diserahterimakan.<br>
+            - Mohon melakukan konfirmasi kirim bukti transfer jika pembayaran telah dilakukan.
+          </div>
+
+          <table style="width: 100%; margin-top: 35px; border-collapse: collapse; font-size: 9pt; text-align: center;">
+            <tr>
+              <td style="width: 50%; vertical-align: top;">
+                <p style="margin: 0; font-weight: bold;">Hormat Kami,</p>
+                <div style="height: 45px;"></div>
+                <p style="margin: 0; font-weight: bold; text-decoration: underline;">( Service Kamera Bogor )</p>
+              </td>
+              <td style="width: 50%; vertical-align: top;">
+                <p style="margin: 0; font-weight: bold;">Penerima / Mitra Pedagang,</p>
+                <div style="height: 45px;"></div>
+                <p style="margin: 0; font-weight: bold; text-decoration: underline;">( ${pedagangName} )</p>
+              </td>
+            </tr>
+          </table>
+        </div>
+      `;
+
+      window.print();
+      setTimeout(() => { document.title = oldTitle; }, 1000);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadData();
+      setInterval(loadData, 5000);
+    });
+  </script>
+</body>
+</html>
