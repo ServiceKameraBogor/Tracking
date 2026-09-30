@@ -645,8 +645,12 @@
         currentLoadedSpks.forEach(loadedItem => {
           const spkId = String(getVal(loadedItem, 'id', 'ID')).toLowerCase();
           
+          // OTOMATIS UBAH STATUS SPK MENJADI "Antrian Pengecekan"
+          loadedItem.status = 'Antrian Pengecekan';
+          loadedItem.Status = 'Antrian Pengecekan';
           loadedItem.serahTerimaTech = currentTech;
           loadedItem.serahTerimaDate = dateStr;
+          loadedItem.serahTerima = true;
           loadedItem.teknisiName = currentTech;
           loadedItem.Teknisi = currentTech;
           loadedItem.lastLocalEdit = Date.now();
@@ -662,7 +666,7 @@
         });
 
         saveData();
-        alert(`✅ Sukses! Surat Serah Terima ${currentLoadedSpks.length} unit telah berhasil dikirim ke Portal Teknisi ${currentTech}.`);
+        alert(`✅ Sukses! Surat Serah Terima ${currentLoadedSpks.length} unit telah berhasil dikirim ke Portal Teknisi ${currentTech} dan status otomatis diubah ke 'Antrian Pengecekan'.`);
       } catch (err) {
         alert("Terjadi kesalahan saat mengirim data: " + err.message);
       }
