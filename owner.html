@@ -2,10 +2,11 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Service Kamera Bogor - Owner Portal</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
+    * { -webkit-tap-highlight-color: transparent; }
     #printableArea { display: none; }
     @media print {
       @page { margin: 1cm; size: auto; }
@@ -26,28 +27,28 @@
     }
   </style>
 </head>
-<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col items-center p-4">
+<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col items-center p-2 sm:p-4 selection:bg-amber-200">
 
   <!-- SIDEBAR NAVIGATION DRAWER -->
-  <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/50 z-40 hidden transition-opacity"></div>
-  <div id="sidebarMenu" class="fixed top-0 left-0 bottom-0 w-72 bg-white z-50 shadow-2xl p-5 transform -translate-x-full transition-transform duration-300 flex flex-col justify-between">
-    <div class="space-y-6">
-      <div class="flex justify-between items-center border-b border-slate-200 pb-4">
-        <h2 class="font-black text-sm text-slate-900 tracking-tight">NAVIGASI OWNER</h2>
-        <button onclick="toggleSidebar()" class="text-slate-400 hover:text-slate-700 font-bold text-lg p-1">✕</button>
+  <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 hidden transition-opacity"></div>
+  <div id="sidebarMenu" class="fixed top-0 left-0 bottom-0 w-72 max-w-[85vw] bg-white z-50 shadow-2xl p-4 sm:p-5 transform -translate-x-full transition-transform duration-300 flex flex-col justify-between">
+    <div class="space-y-5 sm:space-y-6">
+      <div class="flex justify-between items-center border-b border-slate-200 pb-3 sm:pb-4">
+        <h2 class="font-black text-xs sm:text-sm text-slate-900 tracking-tight uppercase">Navigasi Owner</h2>
+        <button onclick="toggleSidebar()" class="text-slate-400 hover:text-slate-700 font-bold text-xl p-1 active:scale-95 transition">✕</button>
       </div>
 
       <div class="space-y-2 text-xs font-bold">
-        <button onclick="switchView('total'); toggleSidebar();" id="navTotal" class="w-full text-left px-3.5 py-2.5 rounded-xl bg-amber-400 text-slate-950 flex items-center gap-2.5 shadow-sm transition">
+        <button onclick="switchView('total'); toggleSidebar();" id="navTotal" class="w-full text-left px-3.5 py-3 sm:py-2.5 rounded-xl bg-amber-400 text-slate-950 flex items-center gap-2.5 shadow-sm active:scale-[0.98] transition">
           <span>📊</span> Total Pendapatan Toko
         </button>
-        <button onclick="switchView('adib'); toggleSidebar();" id="navAdib" class="w-full text-left px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center gap-2.5 transition">
+        <button onclick="switchView('adib'); toggleSidebar();" id="navAdib" class="w-full text-left px-3.5 py-3 sm:py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center gap-2.5 active:scale-[0.98] transition">
           <span>👨‍🔧</span> Penghasilan Teknisi Adib
         </button>
-        <button onclick="switchView('oky'); toggleSidebar();" id="navOky" class="w-full text-left px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center gap-2.5 transition">
+        <button onclick="switchView('oky'); toggleSidebar();" id="navOky" class="w-full text-left px-3.5 py-3 sm:py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center gap-2.5 active:scale-[0.98] transition">
           <span>👨‍🔧</span> Penghasilan Teknisi Oky
         </button>
-        <button onclick="switchView('pedagang'); toggleSidebar();" id="navPedagang" class="w-full text-left px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center gap-2.5 transition">
+        <button onclick="switchView('pedagang'); toggleSidebar();" id="navPedagang" class="w-full text-left px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center gap-2.5 active:scale-[0.98] transition">
           <span>🤝</span> Unit & Tagihan Pedagang
         </button>
       </div>
@@ -58,75 +59,87 @@
     </div>
   </div>
 
-  <div class="w-full max-w-4xl bg-white rounded-2xl shadow-lg p-6 my-4 border border-slate-200 space-y-6 no-print">
+  <div class="w-full max-w-4xl bg-white rounded-2xl shadow-lg p-3.5 sm:p-6 my-1.5 sm:my-4 border border-slate-200/80 space-y-4 sm:space-y-6 no-print">
     
     <!-- HEADER OWNER PORTAL -->
-    <div class="text-center border-b border-slate-200 pb-4 relative">
-      <button onclick="toggleSidebar()" class="absolute left-0 top-0 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 p-2 rounded-xl transition flex items-center gap-1.5 shadow-sm active:scale-95">
-        <span class="text-sm font-black">☰</span>
-        <span class="text-[10px] font-bold hidden sm:inline">Menu</span>
-      </button>
+    <div class="border-b border-slate-200 pb-3 sm:pb-4 space-y-3">
+      <div class="flex justify-between items-center">
+        <button onclick="toggleSidebar()" class="bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 px-3 py-1.5 sm:py-2 rounded-xl transition flex items-center gap-1.5 shadow-sm active:scale-95">
+          <span class="text-sm font-black">☰</span>
+          <span class="text-xs font-bold">Menu</span>
+        </button>
 
-      <div class="absolute right-0 top-0 flex items-center gap-1.5 bg-amber-50 border border-amber-300 px-2.5 py-1 rounded-full text-[10px] text-amber-900 font-bold">
-        <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
-        <span>👑 Dashboard Owner</span>
+        <div class="flex items-center gap-1.5 bg-amber-50 border border-amber-300 px-2.5 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs text-amber-900 font-bold shadow-xs">
+          <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+          <span>👑 Dashboard Owner</span>
+        </div>
       </div>
 
-      <h1 class="text-2xl font-black text-slate-900 tracking-tight">SERVICE KAMERA BOGOR</h1>
+      <div class="text-center pt-1">
+        <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">SERVICE KAMERA BOGOR</h1>
+      </div>
     </div>
 
     <!-- LAMAN 1: TOTAL PENDAPATAN TOKO -->
-    <div id="viewTotal" class="space-y-6">
-      <div class="border-b border-slate-200 pb-3">
-        <h2 class="font-black text-base text-slate-900">📊 Ringkasan Total Pendapatan Toko</h2>
-        <p class="text-xs text-slate-500 mt-0.5">Ringkasan hasil pengerjaan seluruh unit (Lunas & Belum Lunas).</p>
+    <div id="viewTotal" class="space-y-4 sm:space-y-6">
+      <div class="border-b border-slate-100 pb-2.5">
+        <h2 class="font-black text-sm sm:text-base text-slate-900">📊 Ringkasan Total Pendapatan Toko</h2>
+        <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5">Ringkasan hasil pengerjaan seluruh unit (Lunas & Belum Lunas).</p>
       </div>
 
       <!-- CARDS RINGKASAN GLOBAL -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-        <div class="bg-emerald-50 border border-emerald-300 p-3.5 rounded-xl shadow-sm">
-          <span class="text-[10px] text-emerald-800 font-bold block">Total Pendapatan Toko (Selesai)</span>
-          <h3 id="totalGlobalRevenue" class="text-xl font-black text-emerald-950 mt-1">Rp 0</h3>
-          <p id="totalGlobalSub" class="text-[9px] text-emerald-800 font-medium mt-0.5">Lunas: Rp 0 | Belum: Rp 0</p>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3">
+        <div class="bg-emerald-50/90 border border-emerald-200/80 p-3 sm:p-3.5 rounded-xl shadow-xs flex flex-col justify-between">
+          <span class="text-[10px] sm:text-xs text-emerald-800 font-bold block leading-tight">Total Pendapatan Toko</span>
+          <div class="mt-1.5">
+            <h3 id="totalGlobalRevenue" class="text-base sm:text-xl font-black text-emerald-950 tracking-tight">Rp 0</h3>
+            <p id="totalGlobalSub" class="text-[9px] sm:text-[10px] text-emerald-800 font-semibold mt-0.5 leading-tight">Lunas: Rp 0 | Belum: Rp 0</p>
+          </div>
         </div>
 
-        <div class="bg-amber-50 border border-amber-300 p-3.5 rounded-xl shadow-sm">
-          <span class="text-[10px] text-amber-900 font-bold block">Total Hasil Pekerjaan Adib</span>
-          <h3 id="totalOmsetAdib" class="text-xl font-black text-amber-950 mt-1">Rp 0</h3>
-          <p id="countUnitAdib" class="text-[9px] text-amber-800 mt-0.5">0 Unit Selesai</p>
+        <div class="bg-amber-50/90 border border-amber-200/80 p-3 sm:p-3.5 rounded-xl shadow-xs flex flex-col justify-between">
+          <span class="text-[10px] sm:text-xs text-amber-900 font-bold block leading-tight">Pekerjaan Adib</span>
+          <div class="mt-1.5">
+            <h3 id="totalOmsetAdib" class="text-base sm:text-xl font-black text-amber-950 tracking-tight">Rp 0</h3>
+            <p id="countUnitAdib" class="text-[9px] sm:text-[10px] text-amber-800 font-semibold mt-0.5">0 Unit Selesai</p>
+          </div>
         </div>
 
-        <div class="bg-blue-50 border border-blue-300 p-3.5 rounded-xl shadow-sm">
-          <span class="text-[10px] text-blue-900 font-bold block">Total Hasil Pekerjaan Oky</span>
-          <h3 id="totalOmsetOky" class="text-xl font-black text-blue-950 mt-1">Rp 0</h3>
-          <p id="countUnitOky" class="text-[9px] text-blue-800 mt-0.5">0 Unit Selesai</p>
+        <div class="bg-blue-50/90 border border-blue-200/80 p-3 sm:p-3.5 rounded-xl shadow-xs flex flex-col justify-between">
+          <span class="text-[10px] sm:text-xs text-blue-900 font-bold block leading-tight">Pekerjaan Oky</span>
+          <div class="mt-1.5">
+            <h3 id="totalOmsetOky" class="text-base sm:text-xl font-black text-blue-950 tracking-tight">Rp 0</h3>
+            <p id="countUnitOky" class="text-[9px] sm:text-[10px] text-blue-800 font-semibold mt-0.5">0 Unit Selesai</p>
+          </div>
         </div>
 
-        <div class="bg-purple-50 border border-purple-300 p-3.5 rounded-xl shadow-sm">
-          <span class="text-[10px] text-purple-900 font-bold block">Omset Unit Pedagang</span>
-          <h3 id="totalOmsetPedagang" class="text-xl font-black text-purple-950 mt-1">Rp 0</h3>
-          <p id="countUnitPedagang" class="text-[9px] text-purple-800 mt-0.5">0 Unit Pedagang</p>
+        <div class="bg-purple-50/90 border border-purple-200/80 p-3 sm:p-3.5 rounded-xl shadow-xs flex flex-col justify-between">
+          <span class="text-[10px] sm:text-xs text-purple-900 font-bold block leading-tight">Omset Pedagang</span>
+          <div class="mt-1.5">
+            <h3 id="totalOmsetPedagang" class="text-base sm:text-xl font-black text-purple-950 tracking-tight">Rp 0</h3>
+            <p id="countUnitPedagang" class="text-[9px] sm:text-[10px] text-purple-800 font-semibold mt-0.5">0 Unit Pedagang</p>
+          </div>
         </div>
       </div>
 
       <!-- TABEL TRANSAKSI KEUANGAN -->
-      <div class="space-y-3">
-        <div class="flex justify-between items-center">
+      <div class="space-y-2.5 sm:space-y-3">
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
           <h4 class="font-extrabold text-xs text-slate-900 uppercase tracking-wide">Daftar Seluruh Unit Selesai / Lunas:</h4>
-          <input type="text" id="searchTotalInput" oninput="renderOwnerData()" placeholder="🔍 Cari SPK, Nama, Unit..." class="p-2 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none focus:border-amber-400 w-48 font-medium">
+          <input type="text" id="searchTotalInput" oninput="renderOwnerData()" placeholder="🔍 Cari SPK, Nama, Unit..." class="p-2.5 sm:p-2 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-amber-400 w-full sm:w-48 font-medium shadow-xs">
         </div>
 
-        <div class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+        <div class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50 shadow-xs">
           <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs">
+            <table class="w-full text-left border-collapse text-[11px] sm:text-xs min-w-[550px] sm:min-w-full">
               <thead>
-                <tr class="bg-slate-200/70 text-slate-700 border-b border-slate-200 font-bold">
-                  <th class="p-3">No. SPK</th>
-                  <th class="p-3">Pelanggan</th>
-                  <th class="p-3">Unit / Kamera</th>
-                  <th class="p-3">Teknisi</th>
-                  <th class="p-3">Status Bayar</th>
-                  <th class="p-3 text-right">Biaya Akhir</th>
+                <tr class="bg-slate-200/70 text-slate-700 border-b border-slate-200 font-bold whitespace-nowrap">
+                  <th class="p-2.5 sm:p-3">No. SPK</th>
+                  <th class="p-2.5 sm:p-3">Pelanggan</th>
+                  <th class="p-2.5 sm:p-3">Unit / Kamera</th>
+                  <th class="p-2.5 sm:p-3">Teknisi</th>
+                  <th class="p-2.5 sm:p-3">Status Bayar</th>
+                  <th class="p-2.5 sm:p-3 text-right">Biaya Akhir</th>
                 </tr>
               </thead>
               <tbody id="tableTotalBody" class="divide-y divide-slate-200 bg-white">
@@ -139,38 +152,38 @@
     </div>
 
     <!-- LAMAN 2: LAPORAN PENGHASILAN TEKNISI ADIB -->
-    <div id="viewAdib" class="hidden space-y-6">
-      <div class="border-b border-slate-200 pb-3 flex justify-between items-center">
+    <div id="viewAdib" class="hidden space-y-4 sm:space-y-6">
+      <div class="border-b border-slate-100 pb-2.5 flex justify-between items-center gap-2">
         <div>
-          <h2 class="font-black text-base text-slate-900">👨‍🔧 Laporan Total Hasil Pekerjaan Teknisi Adib</h2>
-          <p class="text-xs text-slate-500 mt-0.5">Mencakup seluruh unit Selesai yang dikerjakan Adib (Lunas & Belum Lunas).</p>
+          <h2 class="font-black text-sm sm:text-base text-slate-900">👨‍🔧 Laporan Teknisi Adib</h2>
+          <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5">Seluruh unit Selesai dikerjakan Adib (Lunas & Belum Lunas).</p>
         </div>
-        <button onclick="switchView('total')" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold px-3 py-1.5 rounded-lg transition">Kembali ke Total</button>
+        <button onclick="switchView('total')" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold px-3 py-1.5 rounded-lg transition shrink-0 active:scale-95">Kembali</button>
       </div>
 
-      <div class="bg-amber-50 border border-amber-300 p-4 rounded-xl flex flex-col md:flex-row justify-between md:items-center gap-3 shadow-sm">
+      <div class="bg-amber-50 border border-amber-300 p-3.5 sm:p-4 rounded-xl flex flex-col sm:flex-row justify-between sm:items-center gap-2.5 sm:gap-3 shadow-xs">
         <div>
           <span class="text-xs text-amber-900 font-bold block">Total Seluruh Pekerjaan Adib (Selesai)</span>
-          <h3 id="adibRevenueDetail" class="text-2xl font-black text-amber-950">Rp 0</h3>
-          <p id="adibSubDetail" class="text-[11px] text-amber-800 font-medium mt-0.5">Lunas: Rp 0 | Belum Lunas: Rp 0</p>
+          <h3 id="adibRevenueDetail" class="text-xl sm:text-2xl font-black text-amber-950 mt-0.5">Rp 0</h3>
+          <p id="adibSubDetail" class="text-[10px] sm:text-[11px] text-amber-800 font-medium mt-0.5">Lunas: Rp 0 | Belum Lunas: Rp 0</p>
         </div>
-        <div class="text-left md:text-right border-t md:border-t-0 pt-2 md:pt-0 border-amber-200">
-          <span id="adibUnitDetail" class="text-lg font-black text-amber-900">0 Unit</span>
-          <span class="text-[10px] text-amber-700 block font-medium">Total Selesai Dikerjakan</span>
+        <div class="text-left sm:text-right border-t sm:border-t-0 pt-2 sm:pt-0 border-amber-200/80 flex sm:flex-col justify-between items-center sm:items-end">
+          <span id="adibUnitDetail" class="text-base sm:text-lg font-black text-amber-900">0 Unit</span>
+          <span class="text-[10px] text-amber-700 font-medium">Total Selesai Dikerjakan</span>
         </div>
       </div>
 
-      <div class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+      <div class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50 shadow-xs">
         <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse text-xs">
+          <table class="w-full text-left border-collapse text-[11px] sm:text-xs min-w-[550px] sm:min-w-full">
             <thead>
-              <tr class="bg-slate-200/70 text-slate-700 border-b border-slate-200 font-bold">
-                <th class="p-3">No. SPK</th>
-                <th class="p-3">Pelanggan</th>
-                <th class="p-3">Unit / Perangkat</th>
-                <th class="p-3">Rincian Pekerjaan</th>
-                <th class="p-3">Status Bayar</th>
-                <th class="p-3 text-right">Biaya Service</th>
+              <tr class="bg-slate-200/70 text-slate-700 border-b border-slate-200 font-bold whitespace-nowrap">
+                <th class="p-2.5 sm:p-3">No. SPK</th>
+                <th class="p-2.5 sm:p-3">Pelanggan</th>
+                <th class="p-2.5 sm:p-3">Unit / Perangkat</th>
+                <th class="p-2.5 sm:p-3">Rincian Pekerjaan</th>
+                <th class="p-2.5 sm:p-3">Status Bayar</th>
+                <th class="p-2.5 sm:p-3 text-right">Biaya Service</th>
               </tr>
             </thead>
             <tbody id="tableAdibBody" class="divide-y divide-slate-200 bg-white">
@@ -182,38 +195,38 @@
     </div>
 
     <!-- LAMAN 3: LAPORAN PENGHASILAN TEKNISI OKY -->
-    <div id="viewOky" class="hidden space-y-6">
-      <div class="border-b border-slate-200 pb-3 flex justify-between items-center">
+    <div id="viewOky" class="hidden space-y-4 sm:space-y-6">
+      <div class="border-b border-slate-100 pb-2.5 flex justify-between items-center gap-2">
         <div>
-          <h2 class="font-black text-base text-slate-900">👨‍🔧 Laporan Total Hasil Pekerjaan Teknisi Oky</h2>
-          <p class="text-xs text-slate-500 mt-0.5">Mencakup seluruh unit Selesai yang dikerjakan Oky (Lunas & Belum Lunas).</p>
+          <h2 class="font-black text-sm sm:text-base text-slate-900">👨‍🔧 Laporan Teknisi Oky</h2>
+          <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5">Seluruh unit Selesai dikerjakan Oky (Lunas & Belum Lunas).</p>
         </div>
-        <button onclick="switchView('total')" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold px-3 py-1.5 rounded-lg transition">Kembali ke Total</button>
+        <button onclick="switchView('total')" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold px-3 py-1.5 rounded-lg transition shrink-0 active:scale-95">Kembali</button>
       </div>
 
-      <div class="bg-blue-50 border border-blue-300 p-4 rounded-xl flex flex-col md:flex-row justify-between md:items-center gap-3 shadow-sm">
+      <div class="bg-blue-50 border border-blue-300 p-3.5 sm:p-4 rounded-xl flex flex-col sm:flex-row justify-between sm:items-center gap-2.5 sm:gap-3 shadow-xs">
         <div>
           <span class="text-xs text-blue-900 font-bold block">Total Seluruh Pekerjaan Oky (Selesai)</span>
-          <h3 id="okyRevenueDetail" class="text-2xl font-black text-blue-950">Rp 0</h3>
-          <p id="okySubDetail" class="text-[11px] text-blue-800 font-medium mt-0.5">Lunas: Rp 0 | Belum Lunas: Rp 0</p>
+          <h3 id="okyRevenueDetail" class="text-xl sm:text-2xl font-black text-blue-950 mt-0.5">Rp 0</h3>
+          <p id="okySubDetail" class="text-[10px] sm:text-[11px] text-blue-800 font-medium mt-0.5">Lunas: Rp 0 | Belum Lunas: Rp 0</p>
         </div>
-        <div class="text-left md:text-right border-t md:border-t-0 pt-2 md:pt-0 border-blue-200">
-          <span id="okyUnitDetail" class="text-lg font-black text-blue-900">0 Unit</span>
-          <span class="text-[10px] text-blue-700 block font-medium">Total Selesai Dikerjakan</span>
+        <div class="text-left sm:text-right border-t sm:border-t-0 pt-2 sm:pt-0 border-blue-200/80 flex sm:flex-col justify-between items-center sm:items-end">
+          <span id="okyUnitDetail" class="text-base sm:text-lg font-black text-blue-900">0 Unit</span>
+          <span class="text-[10px] text-blue-700 font-medium">Total Selesai Dikerjakan</span>
         </div>
       </div>
 
-      <div class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+      <div class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50 shadow-xs">
         <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse text-xs">
+          <table class="w-full text-left border-collapse text-[11px] sm:text-xs min-w-[550px] sm:min-w-full">
             <thead>
-              <tr class="bg-slate-200/70 text-slate-700 border-b border-slate-200 font-bold">
-                <th class="p-3">No. SPK</th>
-                <th class="p-3">Pelanggan</th>
-                <th class="p-3">Unit / Perangkat</th>
-                <th class="p-3">Rincian Pekerjaan</th>
-                <th class="p-3">Status Bayar</th>
-                <th class="p-3 text-right">Biaya Service</th>
+              <tr class="bg-slate-200/70 text-slate-700 border-b border-slate-200 font-bold whitespace-nowrap">
+                <th class="p-2.5 sm:p-3">No. SPK</th>
+                <th class="p-2.5 sm:p-3">Pelanggan</th>
+                <th class="p-2.5 sm:p-3">Unit / Perangkat</th>
+                <th class="p-2.5 sm:p-3">Rincian Pekerjaan</th>
+                <th class="p-2.5 sm:p-3">Status Bayar</th>
+                <th class="p-2.5 sm:p-3 text-right">Biaya Service</th>
               </tr>
             </thead>
             <tbody id="tableOkyBody" class="divide-y divide-slate-200 bg-white">
@@ -225,72 +238,72 @@
     </div>
 
     <!-- LAMAN 4: LAPORAN UNIT & TAGIHAN PEDAGANG -->
-    <div id="viewPedagang" class="hidden space-y-6">
-      <div class="border-b border-slate-200 pb-3 flex flex-col md:flex-row justify-between md:items-center gap-2">
+    <div id="viewPedagang" class="hidden space-y-4 sm:space-y-6">
+      <div class="border-b border-slate-100 pb-2.5 flex flex-col sm:flex-row justify-between sm:items-center gap-2">
         <div>
-          <h2 class="font-black text-base text-slate-900">🤝 Laporan Khusus Unit & Tagihan Pedagang</h2>
-          <p class="text-xs text-slate-500 mt-0.5">Cari pedagang untuk merekap tagihan Selesai & mencetak Invoice Rekap.</p>
+          <h2 class="font-black text-sm sm:text-base text-slate-900">🤝 Laporan Unit & Tagihan Pedagang</h2>
+          <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5">Cari pedagang untuk merekap tagihan Selesai & cetak Invoice.</p>
         </div>
-        <button onclick="switchView('total')" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold px-3 py-1.5 rounded-lg transition self-start md:self-auto">Kembali ke Total</button>
+        <button onclick="switchView('total')" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold px-3 py-1.5 rounded-lg transition self-start sm:self-auto active:scale-95">Kembali</button>
       </div>
 
       <!-- SEARCH PEDAGANG INPUT -->
-      <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2">
+      <div class="bg-slate-50 p-3 sm:p-3.5 rounded-xl border border-slate-200 space-y-1.5 shadow-xs">
         <label class="block text-xs font-bold text-slate-800">🔍 Cari Nama Pedagang / Mitra:</label>
-        <input type="text" id="searchPedagangInput" oninput="renderOwnerData()" placeholder="Ketik nama pedagang (contoh: Robby, Budi, KameraBogor...)" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-amber-400">
+        <input type="text" id="searchPedagangInput" oninput="renderOwnerData()" placeholder="Ketik nama pedagang (contoh: Robby, Budi...)" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-amber-400 shadow-xs">
       </div>
 
       <!-- BOX REKAP TAGIHAN OTOMATIS PEDAGANG -->
-      <div id="boxUnpaidPedagang" class="hidden bg-rose-50 border border-rose-300 p-4 rounded-xl space-y-3 shadow-sm">
-        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-rose-200 pb-2">
+      <div id="boxUnpaidPedagang" class="hidden bg-rose-50/90 border border-rose-300 p-3.5 sm:p-4 rounded-xl space-y-3 shadow-xs">
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-rose-200/80 pb-2">
           <div>
             <span class="text-[10px] text-rose-800 font-bold uppercase tracking-wide">📌 Rekap Tagihan Belum Lunas (Unit Selesai)</span>
-            <h3 id="unpaidPedagangName" class="text-base font-black text-rose-950">Pedagang: -</h3>
+            <h3 id="unpaidPedagangName" class="text-sm sm:text-base font-black text-rose-950">Pedagang: -</h3>
           </div>
           <div class="text-left sm:text-right">
-            <span id="unpaidPedagangTotal" class="text-xl font-black text-rose-900 block">Rp 0</span>
+            <span id="unpaidPedagangTotal" class="text-lg sm:text-xl font-black text-rose-900 block">Rp 0</span>
             <span id="unpaidPedagangCount" class="text-[10px] font-bold text-rose-700 block">0 Unit Selesai Belum Lunas</span>
           </div>
         </div>
 
         <!-- LIST DETIL TAGIHAN UNPAID -->
-        <div class="space-y-1" id="unpaidPedagangItemList"></div>
+        <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1" id="unpaidPedagangItemList"></div>
 
         <div class="flex flex-col sm:flex-row gap-2 pt-1">
-          <button id="btnSendWaPedagang" onclick="sendWaTagihanPedagang()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-2.5 rounded-xl text-xs transition shadow flex items-center justify-center gap-1.5">
-            <span>💬 Kirim Rekap Tagihan via WhatsApp</span>
+          <button id="btnSendWaPedagang" onclick="sendWaTagihanPedagang()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3 sm:py-2.5 rounded-xl text-xs transition shadow-xs flex items-center justify-center gap-1.5 active:scale-[0.98]">
+            <span>💬 Kirim Rekap via WA</span>
           </button>
-          <button id="btnPrintRekapPedagang" onclick="printInvoiceRekapPedagang()" class="flex-1 bg-slate-900 hover:bg-slate-800 text-amber-400 font-extrabold py-2.5 rounded-xl text-xs transition shadow flex items-center justify-center gap-1.5">
+          <button id="btnPrintRekapPedagang" onclick="printInvoiceRekapPedagang()" class="flex-1 bg-slate-900 hover:bg-slate-800 text-amber-400 font-extrabold py-3 sm:py-2.5 rounded-xl text-xs transition shadow-xs flex items-center justify-center gap-1.5 active:scale-[0.98]">
             <span>🖨️ Cetak Invoice Rekap (PDF)</span>
           </button>
         </div>
       </div>
 
       <!-- RINGKASAN PEDAGANG -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div class="bg-purple-50 border border-purple-300 p-4 rounded-xl shadow-sm">
-          <span class="text-xs text-purple-900 font-bold block">Total Pemasukan Pedagang (Lunas)</span>
-          <h3 id="pedagangRevenueDetail" class="text-2xl font-black text-purple-950 mt-1">Rp 0</h3>
+      <div class="grid grid-cols-2 gap-2.5 sm:gap-3">
+        <div class="bg-purple-50/90 border border-purple-200/80 p-3 sm:p-4 rounded-xl shadow-xs">
+          <span class="text-[10px] sm:text-xs text-purple-900 font-bold block leading-tight">Total Pemasukan (Lunas)</span>
+          <h3 id="pedagangRevenueDetail" class="text-lg sm:text-2xl font-black text-purple-950 mt-1 tracking-tight">Rp 0</h3>
         </div>
-        <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl shadow-sm">
-          <span class="text-xs text-slate-600 font-bold block">Total Volume Unit Pedagang</span>
-          <h3 id="pedagangUnitDetail" class="text-2xl font-black text-slate-900 mt-1">0 Unit</h3>
+        <div class="bg-slate-50 border border-slate-200/80 p-3 sm:p-4 rounded-xl shadow-xs">
+          <span class="text-[10px] sm:text-xs text-slate-600 font-bold block leading-tight">Total Volume Unit</span>
+          <h3 id="pedagangUnitDetail" class="text-lg sm:text-2xl font-black text-slate-900 mt-1 tracking-tight">0 Unit</h3>
         </div>
       </div>
 
       <!-- TABEL UTAMA PEDAGANG -->
-      <div class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+      <div class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50 shadow-xs">
         <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse text-xs">
+          <table class="w-full text-left border-collapse text-[11px] sm:text-xs min-w-[550px] sm:min-w-full">
             <thead>
-              <tr class="bg-slate-200/70 text-slate-700 border-b border-slate-200 font-bold">
-                <th class="p-3">No. SPK</th>
-                <th class="p-3">Nama Mitra / Pedagang</th>
-                <th class="p-3">Unit / Perangkat</th>
-                <th class="p-3">Teknisi</th>
-                <th class="p-3">Kategori</th>
-                <th class="p-3">Status Bayar</th>
-                <th class="p-3 text-right">Biaya Akhir</th>
+              <tr class="bg-slate-200/70 text-slate-700 border-b border-slate-200 font-bold whitespace-nowrap">
+                <th class="p-2.5 sm:p-3">No. SPK</th>
+                <th class="p-2.5 sm:p-3">Nama Mitra / Pedagang</th>
+                <th class="p-2.5 sm:p-3">Unit / Perangkat</th>
+                <th class="p-2.5 sm:p-3">Teknisi</th>
+                <th class="p-2.5 sm:p-3">Kategori</th>
+                <th class="p-2.5 sm:p-3">Status Bayar</th>
+                <th class="p-2.5 sm:p-3 text-right">Biaya Akhir</th>
               </tr>
             </thead>
             <tbody id="tablePedagangBody" class="divide-y divide-slate-200 bg-white">
@@ -302,7 +315,7 @@
     </div>
 
     <!-- MAIN PAGE FOOTER -->
-    <div class="border-t border-slate-200 pt-4 text-center text-[11px] text-slate-400 font-medium">
+    <div class="border-t border-slate-200 pt-3.5 sm:pt-4 text-center text-[10px] sm:text-[11px] text-slate-400 font-medium">
       Copyright by Kevin Eleazar Chandra Build V1.1
     </div>
 
@@ -353,13 +366,13 @@
         const el = document.getElementById(`view${v.charAt(0).toUpperCase() + v.slice(1)}`);
         const nav = document.getElementById(`nav${v.charAt(0).toUpperCase() + v.slice(1)}`);
         if (el) el.classList.add('hidden');
-        if (nav) nav.className = 'w-full text-left px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center gap-2.5 transition';
+        if (nav) nav.className = 'w-full text-left px-3.5 py-3 sm:py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center gap-2.5 transition active:scale-[0.98]';
       });
 
       const targetEl = document.getElementById(`view${viewName.charAt(0).toUpperCase() + viewName.slice(1)}`);
       const targetNav = document.getElementById(`nav${viewName.charAt(0).toUpperCase() + viewName.slice(1)}`);
       if (targetEl) targetEl.classList.remove('hidden');
-      if (targetNav) targetNav.className = 'w-full text-left px-3.5 py-2.5 rounded-xl bg-amber-400 text-slate-950 flex items-center gap-2.5 shadow-sm transition';
+      if (targetNav) targetNav.className = 'w-full text-left px-3.5 py-3 sm:py-2.5 rounded-xl bg-amber-400 text-slate-950 flex items-center gap-2.5 shadow-sm transition active:scale-[0.98]';
       
       renderOwnerData();
     }
@@ -482,12 +495,12 @@
 
           return `
             <tr class="hover:bg-slate-50 border-b border-slate-200">
-              <td class="p-3 font-bold text-slate-900">${i.id}</td>
-              <td class="p-3 font-medium text-slate-800">${cleanVal(i.name, 'Pelanggan')}</td>
-              <td class="p-3 text-slate-700">${i.type || 'Unit'}: ${i.model || '-'}</td>
-              <td class="p-3 font-bold text-amber-900">👨‍🔧 ${i.teknisiName || 'Adib'}</td>
-              <td class="p-3">${payBadge}</td>
-              <td class="p-3 text-right font-black text-slate-900">Rp ${parseNumeric(i.biaya).toLocaleString('id-ID')}</td>
+              <td class="p-2.5 sm:p-3 font-bold text-slate-900">${i.id}</td>
+              <td class="p-2.5 sm:p-3 font-medium text-slate-800">${cleanVal(i.name, 'Pelanggan')}</td>
+              <td class="p-2.5 sm:p-3 text-slate-700">${i.type || 'Unit'}: ${i.model || '-'}</td>
+              <td class="p-2.5 sm:p-3 font-bold text-amber-900">👨‍🔧 ${i.teknisiName || 'Adib'}</td>
+              <td class="p-2.5 sm:p-3">${payBadge}</td>
+              <td class="p-2.5 sm:p-3 text-right font-black text-slate-900">Rp ${parseNumeric(i.biaya).toLocaleString('id-ID')}</td>
             </tr>
           `;
         }).join('');
@@ -506,12 +519,12 @@
 
           return `
             <tr class="hover:bg-slate-50 border-b border-slate-200">
-              <td class="p-3 font-bold text-slate-900">${i.id}</td>
-              <td class="p-3 font-medium text-slate-800">${cleanVal(i.name, 'Pelanggan')}</td>
-              <td class="p-3 text-slate-700">${i.type || 'Unit'}: ${i.model || '-'}</td>
-              <td class="p-3 text-slate-600">${cleanVal(i.rincianBiaya, 'Jasa Service & Kalibrasi')}</td>
-              <td class="p-3">${payBadge}</td>
-              <td class="p-3 text-right font-black text-slate-900">Rp ${parseNumeric(i.biaya).toLocaleString('id-ID')}</td>
+              <td class="p-2.5 sm:p-3 font-bold text-slate-900">${i.id}</td>
+              <td class="p-2.5 sm:p-3 font-medium text-slate-800">${cleanVal(i.name, 'Pelanggan')}</td>
+              <td class="p-2.5 sm:p-3 text-slate-700">${i.type || 'Unit'}: ${i.model || '-'}</td>
+              <td class="p-2.5 sm:p-3 text-slate-600">${cleanVal(i.rincianBiaya, 'Jasa Service & Kalibrasi')}</td>
+              <td class="p-2.5 sm:p-3">${payBadge}</td>
+              <td class="p-2.5 sm:p-3 text-right font-black text-slate-900">Rp ${parseNumeric(i.biaya).toLocaleString('id-ID')}</td>
             </tr>
           `;
         }).join('');
@@ -530,12 +543,12 @@
 
           return `
             <tr class="hover:bg-slate-50 border-b border-slate-200">
-              <td class="p-3 font-bold text-slate-900">${i.id}</td>
-              <td class="p-3 font-medium text-slate-800">${cleanVal(i.name, 'Pelanggan')}</td>
-              <td class="p-3 text-slate-700">${i.type || 'Unit'}: ${i.model || '-'}</td>
-              <td class="p-3 text-slate-600">${cleanVal(i.rincianBiaya, 'Jasa Service & Kalibrasi')}</td>
-              <td class="p-3">${payBadge}</td>
-              <td class="p-3 text-right font-black text-slate-900">Rp ${parseNumeric(i.biaya).toLocaleString('id-ID')}</td>
+              <td class="p-2.5 sm:p-3 font-bold text-slate-900">${i.id}</td>
+              <td class="p-2.5 sm:p-3 font-medium text-slate-800">${cleanVal(i.name, 'Pelanggan')}</td>
+              <td class="p-2.5 sm:p-3 text-slate-700">${i.type || 'Unit'}: ${i.model || '-'}</td>
+              <td class="p-2.5 sm:p-3 text-slate-600">${cleanVal(i.rincianBiaya, 'Jasa Service & Kalibrasi')}</td>
+              <td class="p-2.5 sm:p-3">${payBadge}</td>
+              <td class="p-2.5 sm:p-3 text-right font-black text-slate-900">Rp ${parseNumeric(i.biaya).toLocaleString('id-ID')}</td>
             </tr>
           `;
         }).join('');
@@ -567,12 +580,12 @@
             const cost = parseNumeric(item.biaya) || parseNumeric(item.estimasiBiaya) || 0;
             sumUnpaid += cost;
             itemsHtml += `
-              <div class="flex justify-between items-center text-xs bg-white p-2 rounded-lg border border-rose-200 font-medium">
-                <div>
+              <div class="flex justify-between items-center text-[11px] sm:text-xs bg-white p-2 sm:p-2.5 rounded-lg border border-rose-200 font-medium">
+                <div class="pr-2">
                   <span class="font-extrabold text-slate-900">${item.id}</span> - <span class="text-slate-800 font-bold">${item.type} ${item.model}</span>
-                  <span class="text-[10px] text-slate-500 block">S/N: ${cleanVal(item.sn, '-')} | Status: Selesai</span>
+                  <span class="text-[9px] sm:text-[10px] text-slate-500 block">S/N: ${cleanVal(item.sn, '-')} | Status: Selesai</span>
                 </div>
-                <span class="font-black text-rose-800">Rp ${cost.toLocaleString('id-ID')}</span>
+                <span class="font-black text-rose-800 shrink-0">Rp ${cost.toLocaleString('id-ID')}</span>
               </div>
             `;
           });
@@ -604,13 +617,13 @@
 
           return `
             <tr class="hover:bg-slate-50 border-b border-slate-200">
-              <td class="p-3 font-bold text-slate-900">${i.id}</td>
-              <td class="p-3 font-medium text-slate-800">${cleanVal(i.name, 'Pedagang')}</td>
-              <td class="p-3 text-slate-700">${i.type || 'Unit'}: ${i.model || '-'}</td>
-              <td class="p-3 font-bold text-slate-700">👨‍🔧 ${i.teknisiName || 'Adib'}</td>
-              <td class="p-3">${catBadge}</td>
-              <td class="p-3">${payBadge}</td>
-              <td class="p-3 text-right font-black text-slate-900">Rp ${parseNumeric(i.biaya).toLocaleString('id-ID')}</td>
+              <td class="p-2.5 sm:p-3 font-bold text-slate-900">${i.id}</td>
+              <td class="p-2.5 sm:p-3 font-medium text-slate-800">${cleanVal(i.name, 'Pedagang')}</td>
+              <td class="p-2.5 sm:p-3 text-slate-700">${i.type || 'Unit'}: ${i.model || '-'}</td>
+              <td class="p-2.5 sm:p-3 font-bold text-slate-700">👨‍🔧 ${i.teknisiName || 'Adib'}</td>
+              <td class="p-2.5 sm:p-3">${catBadge}</td>
+              <td class="p-2.5 sm:p-3">${payBadge}</td>
+              <td class="p-2.5 sm:p-3 text-right font-black text-slate-900">Rp ${parseNumeric(i.biaya).toLocaleString('id-ID')}</td>
             </tr>
           `;
         }).join('');
